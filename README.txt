@@ -1,4 +1,4 @@
-Grok like it's name sake is meant to be a simple and intuitive  programing language
+Grok like its namesake is meant to be a simple and intuitive  programing language
 that even the newest programmer should be able to pick up fairly quickly. Allowing
 for programmers to spend more time programming and less time looking up syntax or 
 trying to remeber the quirks of a specific language. 
