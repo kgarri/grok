@@ -9,9 +9,23 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Transforms/Scalar/Reassociate.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
+#include "GrokJIT.h"
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 #include <map>
 #include <memory>
 #include <string>
@@ -19,6 +33,7 @@
 #include <vector>
 
 using namespace llvm;
+using namespace llvm::orc;
 
 enum Token{
     //end of file
@@ -200,13 +215,28 @@ static std::unique_ptr<PrototypeAST> ParseExtern();
 static int getNextToken();
 static std::unique_ptr<FunctionAST> ParseTopLevelExpr();
 
-static void InitializeModule();
+static std::unique_ptr<GrokJIT> TheJIT;
+static std::unique_ptr<FunctionPassManager> TheFPM;
+static std::unique_ptr<LoopAnalysisManager> TheLAM;
+static std::unique_ptr<FunctionAnalysisManager> TheFAM;
+static std::unique_ptr<CGSCCAnalysisManager> TheCGAM;
+static std::unique_ptr<ModuleAnalysisManager> TheMAM;
+static std::unique_ptr<PassInstrumentationCallbacks> ThePIC;
+static std::unique_ptr<StandardInstrumentations> TheSI;
+static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+static ExitOnError ExitOnErr;
+
+static void InitializeModuleAndPassManager();
 static void HandleDefinition();
 static void HandleExtern();
 static void HandleTopLevelExpression();
 static void MainLoop();
 
 int main() {
+    InitializeNativeTarget();
+    InitializeNativeTargetAsmPrinter();
+    InitializeNativeTargetAsmParser();
+
     BinopPrecedence['<'] = 10;
     BinopPrecedence['+'] = 20;
     BinopPrecedence['-'] = 20;
@@ -216,8 +246,9 @@ int main() {
     fprintf(stderr, "ready> ");
     getNextToken();
 
-    InitializeModule();
-
+    InitializeModuleAndPassManager();
+    
+    TheJIT = ExitOnErr(GrokJIT::Create());
 
     MainLoop();
 
@@ -264,7 +295,6 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
     auto v = ParseExpression();
     if (!v)
         return nullptr;
-
     if (CurTok != ')' )
         return LogError("expected ')'");
     getNextToken();
@@ -374,7 +404,6 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
 
   std::string FnName = IdentifierStr;
   getNextToken();
-
   if (CurTok != '(')
     return LogErrorP("Expected '(' in prototype");
 
@@ -418,13 +447,42 @@ static std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   return nullptr;
 }
 
-static void InitializeModule() {
-  // Open a new context and module.
-  TheContext = std::make_unique<LLVMContext>();
-  TheModule = std::make_unique<Module>("my cool jit", *TheContext);
+static void InitializeModuleAndPassManager() {
+    // Open a new context and module.
+    TheContext = std::make_unique<LLVMContext>();
+    TheModule = std::make_unique<Module>("GrokJIT", *TheContext);
+    TheModule -> setDataLayout(TheJIT->getDataLayout());
 
-  // Create a new builder for the module.
-  Builder = std::make_unique<IRBuilder<>>(*TheContext);
+    // Create a new builder for the module.
+    Builder = std::make_unique<IRBuilder<>>(*TheContext);
+
+    //Create new pass and analysis managers.
+    TheFPM = std::make_unique<FunctionPassManager>();
+    TheLAM = std::make_unique<LoopAnalysisManager>();
+    TheFAM = std::make_unique<FunctionAnalysisManager>();
+    TheCGAM = std::make_unique<CGSCCAnalysisManager>();
+    TheMAM = std::make_unique<ModuleAnalysisManager>();
+    ThePIC = std::make_unique<PassInstrumentationCallbacks>();
+    TheSI = std::make_unique<StandardInstrumentations>(*TheContext, 
+                                                       true);
+    TheSI->registerCallbacks(*ThePIC, TheMAM.get());
+
+    //Add Transform passes
+    //Do simple "peephole" optimizations and bit-twiddling optzns
+    TheFPM->addPass(InstCombinePass());
+    //Reassociate expressions.
+    TheFPM->addPass(ReassociatePass());
+    //Eliminate Common SubExpressions.
+    TheFPM ->addPass(GVNPass());
+    //Simplifiy the control flow graph (deleting unreachable blocks, etc).
+    TheFPM->addPass(SimplifyCFGPass());
+
+    //Register analysis passes used in these transform passes 
+    PassBuilder PB;
+    PB.registerModuleAnalyses(*TheMAM);
+    PB.registerFunctionAnalyses(*TheFAM);
+    PB.crossRegisterProxies(*TheLAM, *TheFAM, *TheCGAM, *TheMAM);
+
 }
 
 static void HandleDefinition() {
@@ -433,6 +491,9 @@ static void HandleDefinition() {
       fprintf(stderr, "Read function definition:");
       FnIR->print(errs());
       fprintf(stderr, "\n");
+      ExitOnErr(TheJIT->addModule(
+                ThreadSafeModule(std::move(TheModule), std::move(TheContext))));
+      InitializeModuleAndPassManager();
     }
   } else {
     // Skip token for error recovery.
@@ -446,6 +507,7 @@ static void HandleExtern() {
       fprintf(stderr, "Read extern: ");
       FnIR->print(errs());
       fprintf(stderr, "\n");
+      FunctionProtos[ProtoAST->getName()] = std::move(ProtoAST);
     }
   } else {
     // Skip token for error recovery.
@@ -456,14 +518,28 @@ static void HandleExtern() {
 static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
   if (auto FnAST = ParseTopLevelExpr()) {
-    if (auto *FnIR = FnAST->codegen()) {
-      fprintf(stderr, "Read top-level expression:");
-      FnIR->print(errs());
-      fprintf(stderr, "\n");
+    if (FnAST->codegen()) {
+        //Create a ResourceTracker to track JIT'd memory allocated to 
+        //our anonymous expression -- that way we can free it after executing
+        auto RT = TheJIT->getMainJITDylib().createResourceTracker();
 
-      // Remove the anonymous expression.
-      FnIR->eraseFromParent();
-    }
+        auto TSM = ThreadSafeModule(std::move(TheModule), std::move(TheContext));
+
+        ExitOnErr(TheJIT->addModule(std::move(TSM), RT));
+
+        InitializeModuleAndPassManager();
+
+        // Search the JIT for the __ano_expr symbol
+        auto ExprSymbol = ExitOnErr(TheJIT->lookup("__anon_expr"));
+
+        //Get the symbol's adress and cast it to the right type (takes no
+        // arguments, return s a double) so we can call it as a native function.
+        double (*FP)() = ExprSymbol.getAddress().toPtr<double (*)()>();
+        fprintf(stderr, "Evaluated to %f\n", FP());
+        
+        //Delete the anonymous expression module from JIT
+        ExitOnErr(RT->remove());
+        }
   } else {
     // Skip token for error recovery.
     getNextToken();
@@ -493,6 +569,20 @@ static void MainLoop() {
   }
 }
 
+
+Function *getFunction(std::string Name) {
+    //First, see if the function has already been added to the current module. 
+    if (auto *F = TheModule->getFunction(Name))
+        return F;
+
+    //If not, check whether we can codegen the devclarration from some existing
+    //prototype
+    auto FI = FunctionProtos.find(Name);
+    if(FI != FunctionProtos.end())
+        return FI->second->codegen();
+
+    return nullptr;
+}
 
 //-----------------------------------
 //Start of Codegeneration functions
@@ -536,7 +626,7 @@ Value *BinaryExprAST::codegen(){
 
 Value *CallExprAST::codegen() {
     //Look up the name in the global module table.
-    Function *CalleeF = TheModule -> getFunction(Callee);
+    Function *CalleeF =  getFunction(Callee);
     if(!CalleeF)
         return LogErrorV("Unkown function referenced");
 
@@ -571,18 +661,14 @@ Function *PrototypeAST::codegen() {
 //fix bug where extern defintation takes precedance and tha variable name  need to statu the same
 Function *FunctionAST::codegen(){
     //First, check for an existing function from a previous extern declaration. 
-    Function *TheFunction = TheModule->getFunction(Proto-> getName()); 
-
-    if (!TheFunction)
-        TheFunction = Proto->codegen();
+    auto &P = *Proto;
+    FunctionProtos[Proto->getName()] = std::move(Proto);
+    Function *TheFunction = getFunction(P.getName()); 
 
     if (!TheFunction)
         return nullptr;
 
-    if (!TheFunction->empty())
-        return (Function*)LogErrorV("Function cannot be redefined.");
-
-    //Create a new basic block to start insertion into 
+        //Create a new basic block to start insertion into 
     BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
     Builder-> SetInsertPoint(BB);
 
@@ -598,6 +684,9 @@ Function *FunctionAST::codegen(){
         //Validate the generated code, checking for consistency
         verifyFunction(*TheFunction);
 
+        //Optimize the function
+        TheFPM->run(*TheFunction, *TheFAM);
+        
         return TheFunction;
     }
    
@@ -605,3 +694,4 @@ Function *FunctionAST::codegen(){
     TheFunction ->eraseFromParent();
     return nullptr;
 }
+
