@@ -1,6 +1,7 @@
 #include "codegen.h"
 #include "parser.h"
 #include "ast.h"
+#include "lexer.h"
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
@@ -92,7 +93,26 @@ Value *NumberExprAST::codegen()
     return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
+/*
+    https://llvm.org/doxygen/IRBuilder_8h_source.html (line 453)
+  /// Make a new global variable with an initializer that has array of i8 type
+  /// filled in with the null terminated string value specified.  The new global
+  /// variable will be marked mergable with any others of the same contents.  If
+  /// Name is specified, it is the name of the global variable created.
+  ///
+  /// If no module is given via \p M, it is take from the insertion point basic
+  /// block.
+  GlobalVariable *CreateGlobalString(StringRef Str, const Twine &Name = "",
+                                     unsigned AddressSpace = 0,
+                                     Module *M = nullptr, bool AddNull = true);
+*/
+
 // TODO: codegen for strings!!
+Value *StringExprAST::codegen()
+{
+    // fprintf(stderr, "Parsed a string.");
+    return Builder->CreateGlobalString(StringRef(StrVal), "");
+}
 
 // codegen for variables
 Value *VariableExprAST::codegen()
