@@ -77,6 +77,13 @@ extern "C" DLLEXPORT double printd(double X)
     return 0;
 }
 
+// printstr - printf that takes string and prints with newline, returns 0
+extern "C" DLLEXPORT char printstr(char S[])
+{
+    fprintf(stderr, "%s\n", S);
+    return 0;
+}
+
 // ----------------------------------------------------------------------------------------------
 // ==DRIVER CODE ===================================================================================
 // ----------------------------------------------------------------------------------------------
