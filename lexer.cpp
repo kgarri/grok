@@ -1,7 +1,9 @@
 #include "lexer.h"
+#include "codegen.h"
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Function.h>
@@ -14,13 +16,14 @@ using namespace std;
 
 std::string IdentifierStr; // used if tok_identifier
 double NumVal;             // used if tok_number
+std::string StrVal;        // used if tok_string
 
 // gettok - Return next token from std. input
 int gettok()
 {
     // TODO: enforce formatting rules here
 
-    static int LastChar = ' ';
+    static int LastChar = ' '; // previous char
 
     // skip whitespace
     // reads characters one at a time from stdin
@@ -39,7 +42,7 @@ int gettok()
             IdentifierStr += LastChar;
 
         // if token is "def" or "extern," return those corresponding tokens
-        // else return that it is an identifier
+        // else return that it is an identifier -> name of var/function/extern
         if (IdentifierStr == "def")
             return tok_def;
         if (IdentifierStr == "extern")
@@ -62,7 +65,7 @@ int gettok()
     { // number: 0-9. +
         string NumStr;
 
-        // TODO: limit to 1 decimal. truncate any that remain.
+        // TODO: limit to 1 decimal character. truncate any that remain.
         do
         {
             NumStr += LastChar;
@@ -85,6 +88,25 @@ int gettok()
 
         if (LastChar != EOF)
             return gettok();
+    }
+
+    // is string if starts with '"'
+    if (LastChar == '\"')
+    {
+        string currStr;       // stores string as it is parsed
+        LastChar = getchar(); // eat first '"' char
+
+        // TODO: implement escape character
+        do
+        {
+            currStr += LastChar;
+            LastChar = getchar();
+
+        } while (LastChar != '\"'); // string ends with another '"'
+
+        LastChar = getchar(); // eat '"' character
+        StrVal = currStr;     // store string parsed in global StrVal
+        return tok_string;    // return that we found a string
     }
 
     // all other cases
