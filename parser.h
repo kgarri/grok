@@ -27,6 +27,7 @@ unique_ptr<PrototypeAST> LogErrorP(const char *Str);
 // called when token is tok_number
 // takes current value, makes a NumberExprAST node, advances, returns
 static unique_ptr<ExprAST> ParseNumberExpr();
+static unique_ptr<ExprAST> ParseStrExpr();
 
 static unique_ptr<ExprAST> ParseParenExpr(); // parenexpr ::= '(' expression ')'
 
