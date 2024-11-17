@@ -41,6 +41,15 @@ static unique_ptr<ExprAST> ParseNumberExpr()
     return std::move(Result);
 }
 
+// called when token is tok_string
+// takes current value, makes StringExprAST node, advances, returns
+static unique_ptr<ExprAST> ParseStrExpr()
+{
+    auto Result = make_unique<StringExprAST>(StrVal); // make a string with the value
+    getNextToken();
+    return std::move(Result);
+}
+
 // parenexpr ::= '(' expression ')'
 static unique_ptr<ExprAST> ParseParenExpr()
 {
@@ -191,6 +200,8 @@ static unique_ptr<ExprAST> ParsePrimary()
         return ParseIfExpr();
     case tok_for: // in does not have its own parser, it's part of for
         return ParseForExpr();
+    case tok_string:
+        return ParseStrExpr();
     }
 }
 
