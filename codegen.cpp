@@ -141,15 +141,24 @@ Value *BinaryExprAST::codegen()
     // if there are multiple of the same type of expression, each one gets its own unique numeric suffix.
     switch (Op)
     {
+        // all of the following IRBuilder functions are defined in IRBuilder.h <3
+        // string params are Twine names passed to IRBuilder
     case '+':
         return Builder->CreateFAdd(L, R, "addtmp");
     case '-':
         return Builder->CreateFSub(L, R, "subtmp");
     case '*':
         return Builder->CreateFMul(L, R, "multmp");
+    case '/':
+        return Builder->CreateFDiv(L, R, "divtmp");
+    case '%':
+        return Builder->CreateFRem(L, R, "remtmp");
     case '<':
         L = Builder->CreateFCmpULT(L, R, "cmptmp");
         // convert bool to double 0.0 or 1.0.
+        return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    case '>':
+        L = Builder->CreateFCmpUGT(L, R, "cmptmp");
         return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
     default:
         return LogErrorV("invalid binary operator: ");
