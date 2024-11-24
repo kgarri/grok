@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "ast.h"   // contains ExprAST and other classes
 #include "lexer.h" // contains gettok()
+#include "codegen.h"
 
 #include <memory> // used for unique_ptr
 #include <map>

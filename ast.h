@@ -42,6 +42,15 @@ public:
     llvm::Value *codegen() override;
 };
 
+class StringExprAST : public ExprAST
+{
+    string Val;
+
+public:
+    StringExprAST(string Val) : Val(Val) {}
+    llvm::Value *codegen() override;
+};
+
 // expression class for referencing a variable
 class VariableExprAST : public ExprAST
 {
