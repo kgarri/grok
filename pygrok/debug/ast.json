@@ -6,6 +6,37 @@
                 "type": "FunctionStatement",
                 "name": {
                     "type": "IdentifierLiteral",
+                    "value": "test"
+                },
+                "return_type": "int",
+                "parameters": [],
+                "body": {
+                    "type": "BlockStatement",
+                    "statements": [
+                        {
+                            "type": "ReturnStatement",
+                            "return_value": {
+                                "type": "InfixExpression",
+                                "left_node": {
+                                    "type": "IntegerLiteral",
+                                    "value": 69
+                                },
+                                "operator": "%",
+                                "right_node": {
+                                    "type": "IntegerLiteral",
+                                    "value": 60
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "FunctionStatement": {
+                "type": "FunctionStatement",
+                "name": {
+                    "type": "IdentifierLiteral",
                     "value": "main"
                 },
                 "return_type": "int",
@@ -14,41 +45,14 @@
                     "type": "BlockStatement",
                     "statements": [
                         {
-                            "type": "LetStatement",
-                            "name": {
-                                "type": "IdentifierLiteral",
-                                "value": "a"
-                            },
-                            "value": {
-                                "type": "IntegerLiteral",
-                                "value": 4
-                            },
-                            "value_type": "int"
-                        },
-                        {
-                            "type": "AssignStatement",
-                            "ident": {
-                                "type": "IdentifierLiteral",
-                                "value": "a"
-                            },
-                            "right_value": {
-                                "type": "InfixExpression",
-                                "left_node": {
-                                    "type": "IdentifierLiteral",
-                                    "value": "a"
-                                },
-                                "operator": "*",
-                                "right_node": {
-                                    "type": "IntegerLiteral",
-                                    "value": 2
-                                }
-                            }
-                        },
-                        {
                             "type": "ReturnStatement",
                             "return_value": {
-                                "type": "IdentifierLiteral",
-                                "value": "a"
+                                "type": "CallExpression",
+                                "function": {
+                                    "type": "IdentifierLiteral",
+                                    "value": "test"
+                                },
+                                "arguments": []
                             }
                         }
                     ]

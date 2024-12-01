@@ -1,6 +1,7 @@
-fn main() -> int {
-    let a: int = 4; 
-    a = a * 2;
-    return a; 
+fn test() -> int {
+    return 69 % 60 thx
 }
 
+fn main() -> int {
+    return test();
+}
