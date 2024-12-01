@@ -1,19 +1,11 @@
-fn main() -> int {
-    let a: int = 3; 
-
-    if a == 4 {
-        a = a * 2;
-    } 
-    elif a == 3 {
-        a = a * 3;
-    } 
-    else { 
-        a = a/2;
-    }
-
-    return test(); 
-
-fn test() -> int {
-    return 69 % 60 thx
+fn test(a: int, b: int) -> int {
+    return a + b thx
 }
 
+fn mult(a: float, b: float) -> float {
+    return a + b;
+}
+
+fn main() -> int {
+    return test(3, 4);
+}

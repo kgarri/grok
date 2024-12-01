@@ -2,37 +2,35 @@
 target triple = "x86_64-w64-windows-gnu"
 target datalayout = ""
 
-@"true" = constant i1 1
-@"false" = global i1 0
+define i32 @"test"(i32 %".1", i32 %".2")
+{
+test_entry:
+  %".4" = alloca i32
+  store i32 %".1", i32* %".4"
+  %".6" = alloca i32
+  store i32 %".2", i32* %".6"
+  %".8" = load i32, i32* %".4"
+  %".9" = load i32, i32* %".6"
+  %".10" = add i32 %".8", %".9"
+  ret i32 %".10"
+}
+
+define float @"mult"(float %".1", float %".2")
+{
+mult_entry:
+  %".4" = alloca float
+  store float %".1", float* %".4"
+  %".6" = alloca float
+  store float %".2", float* %".6"
+  %".8" = load float, float* %".4"
+  %".9" = load float, float* %".6"
+  %".10" = fadd float %".8", %".9"
+  ret float %".10"
+}
+
 define i32 @"main"()
 {
 main_entry:
-  %".2" = alloca i32
-  store i32 3, i32* %".2"
-  %".4" = load i32, i32* %".2"
-  %".5" = icmp eq i32 %".4", 4
-  br i1 %".5", label %"main_entry.if", label %"main_entry.else"
-main_entry.if:
-  %".7" = load i32, i32* %".2"
-  %".8" = mul i32 %".7", 2
-  store i32 %".8", i32* %".2"
-  br label %"main_entry.endif"
-main_entry.else:
-  %".11" = load i32, i32* %".2"
-  %".12" = icmp eq i32 %".11", 3
-  br i1 %".12", label %"main_entry.else.if", label %"main_entry.else.else"
-main_entry.endif:
-  %".23" = load i32, i32* %".2"
-  ret i32 %".23"
-main_entry.else.if:
-  %".14" = load i32, i32* %".2"
-  %".15" = mul i32 %".14", 3
-  store i32 %".15", i32* %".2"
-  br label %"main_entry.else.endif"
-main_entry.else.else:
-  %".18" = load i32, i32* %".2"
-  %".19" = sdiv i32 %".18", 2
-  store i32 %".19", i32* %".2"
-  br label %"main_entry.else.endif"
-main_entry.else.endif:
-  br label %"main_entry.endif"
+  %".2" = call i32 @"test"(i32 3, i32 4)
+  ret i32 %".2"
+}

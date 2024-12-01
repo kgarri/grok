@@ -31,7 +31,6 @@ if __name__ == "__main__":
 
     if PARSER_DEBUG: 
         print("===== PARSER DEBUG =====")
-        print(f'Program: {program}')
         print(f'Program Statements: {program.stmts()}')
         
         with open("debug/ast.json", "w") as f: 

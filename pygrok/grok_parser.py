@@ -6,6 +6,7 @@ from enum import Enum, auto
 from grok_ast import Statement, Expression, Program
 from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement, IfStatement
 from grok_ast import InfixExpression, CallExpression
+from grok_ast import FunctionParameter 
 from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral, BooleanLiteral
 
 # precedence types 
@@ -155,7 +156,6 @@ class Parser:
         if self.__peek_token_is(TokenType.SEMICOLON):
             self.__next_token()
 
-        print(f'self: {self} expr: {expr}')
         stmt: ExpressionStatement = ExpressionStatement(expr=expr)
 
         return stmt
@@ -204,10 +204,8 @@ class Parser:
             print("ERROR: NO LPAREN")
             return None
         
-        stmt.parameters = []
-        if not self.__expect_peek(TokenType.RPAREN):
-            print("ERROR: NO RPAREN")
-            return None
+        stmt.parameters = self.__parse_function_parameters()
+        print("From after parseFunctionParams, Params: ", stmt.parameters)
         
         if not self.__expect_peek(TokenType.ARROW):
             print("ERROR: NO ARROW")
@@ -226,6 +224,55 @@ class Parser:
         stmt.body = self.__parse_block_statement()
 
         return stmt 
+    
+    def __parse_function_parameters(self) -> list[FunctionParameter]:
+        params: list[FunctionParameter] = []
+
+        # if params () is empty 
+        if self.__peek_token_is(TokenType.RPAREN):
+            print(f"Found RPAREN. Current token: {self.current_token}, peek token {self.peek_token}")
+            self.__next_token()
+            return params
+        
+        self.__next_token()
+
+        # get first param
+        first_param: FunctionParameter = FunctionParameter(name=self.current_token.literal)
+        print(f"First param: {first_param}")
+        
+        if not self.__expect_peek(TokenType.COLON):
+            print(f'Found colon at peek token: {self.peek_token} Current token: {self.current_token} Returning None.')
+            return None
+        
+        self.__next_token()
+
+        first_param.value_type = self.current_token.literal
+        params.append(first_param)
+
+        # get the other params
+        while self.__peek_token_is(TokenType.COMMA):
+            # call twice to skip comma 
+            self.__next_token()
+            self.__next_token()
+
+            param: FunctionParameter = FunctionParameter(name=self.current_token.literal)
+
+            # if this is the last param, break 
+            if not self.__expect_peek(TokenType.COLON):
+                print(f"Found colon. Current token: {self.current_token}, next token: {self.peek_token}")
+                return None
+        
+            self.__next_token()
+
+            param.value_type = self.current_token.literal
+            params.append(param)
+
+        if not self.__expect_peek(TokenType.RPAREN):
+            print(f"Error. Found wrong token. Current token: {self.current_token}, Next token: {self.peek_token}")
+            return None
+        
+        print("Params found:", *params)
+        return params
 
     def __parse_return_statement(self) -> ReturnStatement | None:
         stmt: ReturnStatement = ReturnStatement()
@@ -332,13 +379,33 @@ class Parser:
 
     def __parse_call_expression(self, function: Expression) -> CallExpression:
         expr: CallExpression = CallExpression(function=function)
-        expr.arguments = [] # todo function args
-        
-        if not self.__expect_peek(TokenType.RPAREN):
-            return None
+        expr.arguments = self.__parse_expression_list(TokenType.RPAREN)
         
         return expr
 
+    # look through a list until you reach designated end symbol
+    def __parse_expression_list(self, end: TokenType) -> list[Expression]:
+        e_list: list[Expression] = []
+
+        if self.__peek_token_is(end):
+            self.__next_token()
+            return e_list
+        
+        self.__next_token()
+
+        e_list.append(self.__parse_expression(PrecedenceType.P_LOWEST))
+
+        while self.__peek_token_is(TokenType.COMMA):
+            self.__next_token()
+            self.__next_token()
+
+            e_list.append(self.__parse_expression(PrecedenceType.P_LOWEST))
+
+        if not self.__expect_peek(end):
+            return None
+        
+        return e_list
+    
     # endregion
 
     # region Prefix Methods
