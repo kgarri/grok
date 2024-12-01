@@ -7,12 +7,12 @@
                 "expr": {
                     "type": "InfixExpression",
                     "left_node": {
-                        "type": "IntegerLiteral",
-                        "value": 5
+                        "type": "FloatLiteral",
+                        "value": 4
                     },
-                    "operator": "+",
+                    "operator": "%",
                     "right_node": {
-                        "type": "IntegerLiteral",
+                        "type": "FloatLiteral",
                         "value": 5
                     }
                 }

@@ -3,28 +3,17 @@ from grok_lexer import Lexer
 from grok_compiler import Compiler
 from grok_parser import Parser 
 from grok_ast import Program 
-import json
 
 from llvmlite import ir 
 import llvmlite.binding as llvm  
 from ctypes import CFUNCTYPE, c_int, c_float 
 
-LEXER_DEBUG: bool = False
+LEXER_DEBUG: bool = True
 PARSER_DEBUG: bool = True
 COMPILER_DEBUG: bool = True
 
 if __name__ == "__main__":
-    with open("tests/parser.grk", "r") as f:
-        code: str = f.read()
-
-    if LEXER_DEBUG: 
-        print("===== LEXER  DEBUG =====")
-        
-LEXER_DEBUG: bool = True
-PARSER_DEBUG: bool = True
-
-if __name__ == "__main__":
-    with open("tests/parser.gr", "r") as f:
+    with open("tests/compiler.grk", "r") as f:
         code: str = f.read()
 
     if LEXER_DEBUG: 
@@ -60,5 +49,6 @@ if __name__ == "__main__":
     module.triple = llvm.get_default_triple()
 
     if COMPILER_DEBUG: 
+        print("===== COMPILER DEBUG =====")
         with open("debug/ir.ll", "w") as f: 
             f.write(str(module))
