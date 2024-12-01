@@ -21,9 +21,28 @@
                             },
                             "value": {
                                 "type": "IntegerLiteral",
-                                "value": 5
+                                "value": 4
                             },
                             "value_type": "int"
+                        },
+                        {
+                            "type": "AssignStatement",
+                            "ident": {
+                                "type": "IdentifierLiteral",
+                                "value": "a"
+                            },
+                            "right_value": {
+                                "type": "InfixExpression",
+                                "left_node": {
+                                    "type": "IdentifierLiteral",
+                                    "value": "a"
+                                },
+                                "operator": "*",
+                                "right_node": {
+                                    "type": "IntegerLiteral",
+                                    "value": 2
+                                }
+                            }
                         },
                         {
                             "type": "ReturnStatement",
