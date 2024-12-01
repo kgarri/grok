@@ -9,7 +9,7 @@ from llvmlite import ir
 import llvmlite.binding as llvm  
 from ctypes import CFUNCTYPE, c_int, c_float 
 
-LEXER_DEBUG: bool = False
+LEXER_DEBUG: bool = True
 PARSER_DEBUG: bool = True
 COMPILER_DEBUG: bool = True
 RUN_CODE: bool = True

@@ -23,6 +23,15 @@ class TokenType(Enum):
     #Assignment Symbols 
     EQ = "EQ"
 
+    # Comparison Symbols 
+    LT = '<'
+    GT = '>'
+    EQ_EQ = '=='
+    NOT = '!'
+    NOT_EQ = '!='
+    LT_EQ = '<='
+    GT_EQ = '>='
+
     #Symbols 
     COLON = "COLON"
     SEMICOLON = "SEMICOLON"
@@ -36,6 +45,11 @@ class TokenType(Enum):
     LET = "LET"
     FN = "FN"
     RETURN = "RETURN"
+    IF = "IF"
+    ELSE = "ELSE"
+    ELIF = "ELIF"
+    TRUE = "TRUE"
+    FALSE = "FALSE"
 
     # Typing
     TYPE = "TYPE"
@@ -55,7 +69,12 @@ class Token:
 KEYWORDS: dict[str, TokenType] = {
     "let": TokenType.LET, 
     "fn": TokenType.FN,
-    "return": TokenType.RETURN
+    "return": TokenType.RETURN, 
+    "if": TokenType.IF, 
+    "else": TokenType.ELSE, 
+    "elif": TokenType.ELIF,  
+    "true": TokenType.TRUE, 
+    "false": TokenType.FALSE
 }
 
 ALT_KEYWORDS: dict[str, TokenType] = {
@@ -64,7 +83,12 @@ ALT_KEYWORDS: dict[str, TokenType] = {
     "thx": TokenType.SEMICOLON,
     "fn": TokenType.FN,
     "return": TokenType.RETURN,
-    "arrow": TokenType.ARROW
+    "arrow": TokenType.ARROW, 
+    "would": TokenType.IF, 
+    "otherwise": TokenType.ELSE, 
+    "appreciate": TokenType.ELIF,
+    "reasonable": TokenType.TRUE, 
+    "absurd": TokenType.FALSE
 }
 
 TYPE_KEYWORDS: list[str] = ["int", "float"]
