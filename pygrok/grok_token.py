@@ -19,23 +19,29 @@ class TokenType(Enum):
     SLASH = "SLASH"
     POW = "POW"
     MODULUS = "MODULUS"
-    
+
     #Assignment Symbols 
     EQ = "EQ"
+
     #Symbols 
     COLON = "COLON"
     SEMICOLON = "SEMICOLON"
+    ARROW = "ARROW"
     LPAREN = "LPAREN"
     RPAREN = "RPAREN"
+    LBRACE = "LBRACE"
+    RBRACE = "RBRACE"
 
-    #keywords 
+    # Keywords
     LET = "LET"
+    FN = "FN"
+    RETURN = "RETURN"
 
     # Typing
     TYPE = "TYPE"
 
 class Token: 
-    def __init__(self, type: TokenType, literal: Any, line_no: int, position: int )-> None:
+    def __init__(self, type: TokenType | None = None, literal: Any = None, line_no: int | None = None, position: int |None = None )-> None:
         self.type = type
         self.literal = literal 
         self.line_no = line_no
@@ -45,15 +51,20 @@ class Token:
     def __repr__(self) -> str: 
         return str(self)
 
-        
+
 KEYWORDS: dict[str, TokenType] = {
-    "let": TokenType.LET
+    "let": TokenType.LET, 
+    "fn": TokenType.FN,
+    "return": TokenType.RETURN
 }
 
-ALT_KEYWORDS: dict[str, TokenType] = { 
+ALT_KEYWORDS: dict[str, TokenType] = {
     "pls": TokenType.LET,
     "be": TokenType.EQ,
-    "thanks": TokenType.SEMICOLON
+    "thx": TokenType.SEMICOLON,
+    "fn": TokenType.FN,
+    "return": TokenType.RETURN,
+    "arrow": TokenType.ARROW
 }
 
 TYPE_KEYWORDS: list[str] = ["int", "float"]

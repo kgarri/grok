@@ -21,18 +21,26 @@ class Lexer:
 
             self.position = self.read_position
             self.read_position += 1 
+
+    def __peek_char(self) -> str | None: 
+        """Peeks at upcoming char without advancing lexer pos"""
+        if self.read_position >= len(self.source):
+            return None
+        
+        return self.source[self.read_position]
+    
     def __skip_whitespace(self) -> None: 
         while self.current_char in [' ', '\t', '\n', '\r']:
             if self.current_char == '\n':
                 self.line_no +=1 
             self.__read_char()
 
-    
+
     def __new_token(self, tt: TokenType, literal: Any) -> Token:
         return Token(type=tt, literal = literal, line_no = self.line_no, position= self.position)
     
-    def __is_digit(self, ch: str) -> bool:
-        return '0' <= ch and ch <= '9'
+    def __is_digit(self, ch: str | None) -> bool:
+        return ch is not None and '0' <= ch and ch <= '9'
 
     def __is_letter(self, ch: str) -> bool:
         return 'a' <= ch and ch <='z' or 'A'<= ch and ch <='Z' or ch == '_'
@@ -70,14 +78,19 @@ class Lexer:
         return self.source[position:self.position]
 
     def next_token(self) -> Token: 
-        tok: Token = None  
+        tok: Token = Token() 
 
         self.__skip_whitespace()
         match self.current_char:
             case '+': 
                 tok = self.__new_token(TokenType.PLUS, self.current_char)
-            case '-': 
-                tok = self.__new_token(TokenType.MINUS, self.current_char)
+            case '-':
+                if self.__peek_char() == '>':
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.ARROW, ch + self.current_char)
+                else: 
+                    tok = self.__new_token(TokenType.MINUS, self.current_char)
             case '*': 
                 tok = self.__new_token(TokenType.ASTERISK, self.current_char)
             case '/': 
@@ -91,9 +104,13 @@ class Lexer:
             case ':':
                 tok = self.__new_token(TokenType.COLON, self.current_char)
             case '(': 
-                tok = self.__new_token(TokenType.RPAREN, self.current_char)
-            case ')': 
                 tok = self.__new_token(TokenType.LPAREN, self.current_char)
+            case ')': 
+                tok = self.__new_token(TokenType.RPAREN, self.current_char)
+            case '{':
+                tok = self.__new_token(TokenType.LBRACE, self.current_char)
+            case '}':
+                tok = self.__new_token(TokenType.RBRACE, self.current_char)
             case ";":
                 tok = self.__new_token(TokenType.SEMICOLON, self.current_char)
             case None: 
@@ -111,6 +128,8 @@ class Lexer:
                     tok = self.__new_token(TokenType.ILLEGAL, self.current_char)
         self.__read_char()
         return tok
+
+
 
 
 

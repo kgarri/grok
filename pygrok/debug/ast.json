@@ -2,46 +2,38 @@
     "type": "Program",
     "statements": [
         {
-            "LetStatement": {
-                "type": "LetStatement",
+            "FunctionStatement": {
+                "type": "FunctionStatement",
                 "name": {
                     "type": "IdentifierLiteral",
-                    "value": "a"
+                    "value": "main"
                 },
-                "value": {
-                    "type": "IntegerLiteral",
-                    "value": 10
-                },
-                "value_type": "int"
-            }
-        },
-        {
-            "LetStatement": {
-                "type": "LetStatement",
-                "name": {
-                    "type": "IdentifierLiteral",
-                    "value": "b"
-                },
-                "value": {
-                    "type": "IntegerLiteral",
-                    "value": 15
-                },
-                "value_type": "int"
-            }
-        },
-        {
-            "LetStatement": {
-                "type": "LetStatement",
-                "name": {
-                    "type": "IdentifierLiteral",
-                    "value": "c"
-                },
-                "value": {
-                    "type": "FloatLiteral",
-                    "value": 22
-                },
-                "value_type": "float"
-           
+                "return_type": "int",
+                "parameters": [],
+                "body": {
+                    "type": "BlockStatement",
+                    "statements": [
+                        {
+                            "type": "LetStatement",
+                            "name": {
+                                "type": "IdentifierLiteral",
+                                "value": "a"
+                            },
+                            "value": {
+                                "type": "IntegerLiteral",
+                                "value": 5
+                            },
+                            "value_type": "int"
+                        },
+                        {
+                            "type": "ReturnStatement",
+                            "return_value": {
+                                "type": "IdentifierLiteral",
+                                "value": "a"
+                            }
+                        }
+                    ]
+                }
             }
         }
     ]

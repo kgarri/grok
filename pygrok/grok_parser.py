@@ -4,7 +4,7 @@ from typing import Callable
 from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
-from grok_ast import ExpressionStatement, LetStatement
+from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement
 from grok_ast import InfixExpression
 from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral
 
@@ -30,18 +30,17 @@ PRECEDENCES: dict[TokenType, PrecedenceType] = {
     TokenType.POW: PrecedenceType.P_EXPONENT
 }
 
-# parser class
 class Parser: 
     def __init__(self, lexer: Lexer) -> None:
         self.lexer: Lexer = lexer
 
-        # print errs as generated
         self.errors: list[str] = []
 
-        self.current_token: Token = None # current tok
-        self.peek_token: Token = None # next tok
+        self.current_token: Token = Token() # current tok
+        self.peek_token: Token = Token() # next tok
 
         self.prefix_parse_fns: dict[TokenType, Callable] = {
+            TokenType.IDENT: self.__parse_identifier,
             TokenType.INT: self.__parse_int_literal,
             TokenType.FLOAT: self.__parse_float_literal,
             TokenType.STRING: self.__parse_string_literal,
@@ -78,49 +77,57 @@ class Parser:
             return True
         else:
             self.__peek_error(tt)
-            return False; 
+            return False 
 
     # check precedence (current)
     def __current_precedence(self) -> PrecedenceType:
-        prec: int | None = PRECEDENCES.get(self.peek_token.type)
+        if self.peek_token.type == None: 
+            return PrecedenceType.P_LOWEST
+        prec: PrecedenceType | None = PRECEDENCES.get(self.peek_token.type)
         if prec is None: 
             return PrecedenceType.P_LOWEST
-        return 
-    
+        return prec 
     # check precedence (next)
     def __peek_precedence(self) -> PrecedenceType:
-        prec: int | None = PRECEDENCES.get(self.peek_token.type)
+        if self.peek_token.type == None: 
+            return PrecedenceType.P_LOWEST
+        prec: PrecedenceType | None = PRECEDENCES.get(self.peek_token.type)
         if prec is None: 
             return PrecedenceType.P_LOWEST
-        return prec
+        return prec 
 
     # append error to errors list 
     def __peek_error(self, tt: TokenType) -> None: 
-        self.errors.append("Expected next token to be {tt}, got {self.peek_token.type} instead.")
+        self.errors.append(f'Expected next token to be {tt}, got {self.peek_token.type} instead.')
     
     # used when checking prefix parse function - checks that token exists
     def __no_prefix_parse_fn_error(self, tt: TokenType) -> None: 
-        self.errors.append("No Prefix Parse function for {tt} found.")
+        self.errors.append(f'No Prefix Parse function for {tt} found.')
     
     # endregion 
 
-    def parse_program(self) -> None: 
+    def parse_program(self) -> Program: 
         program: Program = Program()
 
         while self.current_token.type != TokenType.EOF:
-            stmt: Statement = self.__parse_statement()
+            stmt: Statement | None = self.__parse_statement()
             if stmt is not None: 
                 program.statements.append(stmt)
 
             self.__next_token()
 
+        print("Parsed entire program.")
         return program 
     
     # region Statement Methods
-    def __parse_statement(self) -> Statement:
-        match self.current_token.type: 
+    def __parse_statement(self) -> Statement | None:
+        match self.current_token.type:
             case TokenType.LET: 
                 return self.__parse_let_statement()
+            case TokenType.FN: 
+                return self.__parse_function_statement()
+            case TokenType.RETURN: 
+                return self.__parse_return_statement()
             case _:
                 return self.__parse_expression_statement()
     
@@ -130,10 +137,12 @@ class Parser:
         if self.__peek_token_is(TokenType.SEMICOLON):
             self.__next_token()
 
+        print(f'self: {self} expr: {expr}')
         stmt: ExpressionStatement = ExpressionStatement(expr=expr)
 
         return stmt
-    def __parse_let_statement(self) -> LetStatement: 
+    
+    def __parse_let_statement(self) -> LetStatement | None: 
         #let a: int = 10; 
         stmt: LetStatement = LetStatement()
 
@@ -146,7 +155,7 @@ class Parser:
             return None
         
         if not self.__expect_peek(TokenType.TYPE):
-            return None
+            return None 
         
         stmt.value_type = self.current_token.literal 
 
@@ -162,18 +171,86 @@ class Parser:
 
         return stmt
 
+    def __parse_function_statement(self) -> FunctionStatement | None:
+        stmt: FunctionStatement = FunctionStatement()
+
+        # fn name() 8> int { return 10; }
+
+        if not self.__expect_peek(TokenType.IDENT):
+            print("ERROR: NO IDENTIFIER")
+            return None
+        
+        stmt.name = IdentifierLiteral(value=self.current_token.literal)
+
+        if not self.__expect_peek(TokenType.LPAREN):
+            print("ERROR: NO LPAREN")
+            return None
+        
+        stmt.parameters = []
+        if not self.__expect_peek(TokenType.RPAREN):
+            print("ERROR: NO RPAREN")
+            return None
+        
+        if not self.__expect_peek(TokenType.ARROW):
+            print("ERROR: NO ARROW")
+            return None
+        
+        if not self.__expect_peek(TokenType.TYPE):
+            print("ERROR: NO TYPE")
+            return None
+        
+        stmt.return_type = self.current_token.literal
+
+        if not self.__expect_peek(TokenType.LBRACE):
+            print('ERROR: FOUND NO LBRACE.')
+            return None
+        
+        stmt.body = self.__parse_block_statement()
+
+        return stmt 
+
+    def __parse_return_statement(self) -> ReturnStatement | None:
+        stmt: ReturnStatement = ReturnStatement()
+
+        self.__next_token()
+
+        stmt.return_value = self.__parse_expression(PrecedenceType.P_LOWEST)
+
+        if not self.__expect_peek(TokenType.SEMICOLON):
+            return None
+        
+        return stmt
+
+    def __parse_block_statement(self) -> BlockStatement:
+        block_stmt: BlockStatement = BlockStatement()
+
+        self.__next_token()
+
+        while not self.__current_token_is(TokenType.RBRACE) and not self.__current_token_is(TokenType.EOF):
+            stmt: Statement | None  = self.__parse_statement()
+            if stmt is not None: 
+                block_stmt.statements.append(stmt)
+
+            self.__next_token()
+
+        return block_stmt
     # endregion
 
     # region Expression Methods
-    def __parse_expression(self, precedence: PrecedenceType) -> Expression:
-        
+    def __parse_expression(self, precedence: PrecedenceType) -> Expression | None:
+        if self.current_token.type == None:
+            return None
         prefix_fn: Callable | None = self.prefix_parse_fns.get(self.current_token.type)
+        print(f'PREFIX_FN FOUND: {prefix_fn} in {self.current_token.type}')
         if prefix_fn is None: 
             self.__no_prefix_parse_fn_error(self.current_token.type)
             return None
         
         left_expr: Expression = prefix_fn()
+        print(f'LEFT_EXPR FOUND: {left_expr}')
         while not self.__peek_token_is(TokenType.SEMICOLON) and precedence.value < self.__peek_precedence().value:
+            if self.peek_token.type == None:
+                return left_expr
             infix_fn: Callable | None = self.infix_parse_fns.get(self.peek_token.type)
             if infix_fn is None:
                 return left_expr
@@ -182,6 +259,7 @@ class Parser:
 
             left_expr = infix_fn(left_expr)
 
+        print(f'FINISHED LEFT_EXPR: {left_expr}')
         return left_expr
 
     def __parse_infix_expression(self, left_node: Expression) -> Expression:
@@ -194,10 +272,10 @@ class Parser:
         infix_expr.right_node = self.__parse_expression(precedence)
         return infix_expr
     
-    def __parse_grouped_expression(self) -> Expression:
+    def __parse_grouped_expression(self) -> Expression | None:
         self.__next_token()
 
-        expr: Expression = self.__parse_expression(PrecedenceType.P_LOWEST)
+        expr: Expression | None = self.__parse_expression(PrecedenceType.P_LOWEST)
 
         if not self.__expect_peek(TokenType.RPAREN):
             return None
@@ -207,19 +285,22 @@ class Parser:
     # endregion
 
     # region Prefix Methods
-    def __parse_string_literal(self) -> Expression:
+    def __parse_identifier(self) -> IdentifierLiteral | None: 
+        return IdentifierLiteral(value=self.current_token.literal)
+
+    def __parse_string_literal(self) -> Expression | None:
         """Parses StringLiteral from current token"""
         str_lit: StringLiteral = StringLiteral()
 
         try: 
-            str_lit.value = int(self.current_token.literal)
+            str_lit.value = self.current_token.literal
         except:
             self.errors.append("Could not parse `(self.current_token.literal)` as a string.")
             return None
         
         return str_lit
 
-    def __parse_int_literal(self) -> Expression:
+    def __parse_int_literal(self) -> Expression | None:
         """Parses IntegerLiteral from current token"""
         int_lit: IntegerLiteral = IntegerLiteral()
 
@@ -231,7 +312,7 @@ class Parser:
         
         return int_lit
     
-    def __parse_float_literal(self) -> Expression:
+    def __parse_float_literal(self) -> Expression | None:
         """Parses FloatLiteral from current token"""
         float_lit: FloatLiteral = FloatLiteral()
 
