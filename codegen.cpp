@@ -111,7 +111,7 @@ Value *NumberExprAST::codegen()
 Value *StringExprAST::codegen()
 {
     // fprintf(stderr, "Parsed a string.");
-    return Builder->CreateGlobalString(StringRef(StrVal), "");
+    return ConstantDataArray::getString(*TheContext, StringRef(StrVal));
 }
 
 // codegen for variables

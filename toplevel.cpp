@@ -118,8 +118,10 @@ void HandleTopLevelExpression()
 
             // get symbol's address and cast to type
             // call as native function
-            double (*FP)() = ExprSymbol.getAddress().toPtr<double (*)()>();
-            fprintf(stderr, "Evaluated to %f\n", FP());
+            if (double (*FP)() = ExprSymbol.getAddress().toPtr<double (*)()>())
+                fprintf(stderr, "Evaluated to %f\n", FP());
+            if (string (*FP)() = ExprSymbol.getAddress().toPtr<string (*)()>())
+                FP();
 
             // delete anon expr module from JIT -> no re-eval
             ExitOnErr(RT->remove());
