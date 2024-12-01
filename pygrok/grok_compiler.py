@@ -1,8 +1,10 @@
 from llvmlite import ir 
 
-from grok_ast import Node, NodeType, Program, Expression, Statement 
-from grok_ast import ExpressionStatement, InfixExpression 
-from grok_ast import IntegerLiteral, FloatLiteral 
+from grok_ast import Node, NodeType, Program, Expression
+from grok_ast import ExpressionStatement, LetStatement
+from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral
+from grok_ast import InfixExpression 
+from grok_environment import Environment
 
 class Compiler:
     def __init__(self) -> None: 
@@ -15,12 +17,16 @@ class Compiler:
 
         self.builder: ir.IRBuilder = ir.IRBuilder()
 
+        self.env: Environment = Environment()
+
     def compile(self, node: Node) -> None: 
         match node.type(): 
             case NodeType.Program: 
                 self.__visit_program(node)
             case  NodeType.ExpressionStatement:
                 self.__visit_expression_statement(node)
+            case NodeType.LetStatement:
+                self.__visit_let_statement(node)
             case NodeType.InfixExpression:
                 self.__visit_infix_expression(node)
 
@@ -45,6 +51,25 @@ class Compiler:
     # region Statements
     def __visit_expression_statement(self, node: ExpressionStatement) -> None: 
         self.compile(node.expr)
+    def __visit_let_statement(self, node: LetStatement) -> None: 
+        name: str = node.name.value 
+        value: Expression = node.value  
+        value_type: str  = node.value_type #TODO Implement
+
+        value, Type = self.__resolve_value(node=value)
+
+        if self.env.lookup(name) is None:
+            #Define and allocate the variable 
+            ptr = self.builder.alloca(Type)
+
+            #Storing the value to the ptr 
+            self.builder.store(value, ptr)
+
+            #add the variable to the environment 
+            self.env.define(name, value, Type)
+        else: 
+            ptr, _ = self.env.lookup(name)
+            self.builder.store(value, ptr)
     #endregion 
     
     #region Expressions 
@@ -108,6 +133,10 @@ class Compiler:
                 node: FloatLiteral = node 
                 value, Type = node.value, self.type_map["float" if value_type is None else value_type]
                 return ir.Constant(Type , value), Type 
+            case NodeType.IdentifierLiteral: 
+                node: IdentifierLiteral = node
+                ptr,Type = self.env.lookup(node.value)
+                return self.builder.load(ptr), Type
 
             # Expression Values
             case NodeType.InfixExpression: 
