@@ -63,6 +63,9 @@ class ExpressionStatement(Statement):
     def __str__(self):
         return f'ExpressionStatement({self.expr})'
 
+    def __str__(self):
+        return f'ExpressionStatement({self.expr})'
+
     def type(self) -> NodeType: 
         return NodeType.ExpressionStatement
     
@@ -214,9 +217,11 @@ class StringLiteral(Expression):
             "type": self.type().value,
             "value": self.value
         }
+    
 class IdentifierLiteral(Expression):
     def __init__(self, value: str | None = None) -> None:
         self.value: str | None = value
+
     def __str__(self):
         return f'IdentifierLiteral({self.value})'
 

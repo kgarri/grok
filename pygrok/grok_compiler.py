@@ -38,6 +38,7 @@ class Compiler:
                 self.__visit_block_statement(node)
             case NodeType.ReturnStatement: 
                 self.__visit_return_statement(node)
+            
 
     # region Visit Methods 
     def __visit_program(self, node: Program) -> None: 
