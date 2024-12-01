@@ -10,21 +10,11 @@ import llvmlite.binding as llvm
 from ctypes import CFUNCTYPE, c_int, c_float 
 
 LEXER_DEBUG: bool = False
-PARSER_DEBUG: bool = True
-COMPILER_DEBUG: bool = True
+PARSER_DEBUG: bool = False
+COMPILER_DEBUG: bool = True 
 
 if __name__ == "__main__":
-    with open("tests/parser.grk", "r") as f:
-        code: str = f.read()
-
-    if LEXER_DEBUG: 
-        print("===== LEXER  DEBUG =====")
-        
-LEXER_DEBUG: bool = True
-PARSER_DEBUG: bool = True
-
-if __name__ == "__main__":
-    with open("tests/parser.gr", "r") as f:
+    with open("tests/tests.grk", "r") as f:
         code: str = f.read()
 
     if LEXER_DEBUG: 

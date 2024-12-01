@@ -4,9 +4,9 @@ from typing import Callable
 from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
-from grok_ast import ExpressionStatement
+from grok_ast import ExpressionStatement, LetStatement
 from grok_ast import InfixExpression
-from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral
+from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral
 
 # precedence types 
 class PrecedenceType(Enum):
@@ -64,6 +64,8 @@ class Parser:
     def __next_token(self) -> None: 
         self.current_token = self.peek_token 
         self.peek_token = self.lexer.next_token()
+    def __current_token_is(self, tt: TokenType) -> bool: 
+        return self.current_token.type == tt 
 
     # get bool for if peek_token's type is TokenType
     def __peek_token_is(self, tt: TokenType) -> bool: 
@@ -116,7 +118,11 @@ class Parser:
     
     # region Statement Methods
     def __parse_statement(self) -> Statement:
-        return self.__parse_expression_statement()
+        match self.current_token.type: 
+            case TokenType.LET: 
+                return self.__parse_let_statement()
+            case _:
+                return self.__parse_expression_statement()
     
     def __parse_expression_statement(self) -> ExpressionStatement:
         expr = self.__parse_expression(PrecedenceType.P_LOWEST)
@@ -127,6 +133,35 @@ class Parser:
         stmt: ExpressionStatement = ExpressionStatement(expr=expr)
 
         return stmt
+    def __parse_let_statement(self) -> LetStatement: 
+        #let a: int = 10; 
+        stmt: LetStatement = LetStatement()
+
+        if not self.__expect_peek(TokenType.IDENT):
+            return None
+
+        stmt.name = IdentifierLiteral(value = self.current_token.literal)
+
+        if not self.__expect_peek(TokenType.COLON):
+            return None
+        
+        if not self.__expect_peek(TokenType.TYPE):
+            return None
+        
+        stmt.value_type = self.current_token.literal 
+
+        if not self.__expect_peek(TokenType.EQ):
+            return None
+
+        self.__next_token()
+
+        stmt.value = self.__parse_expression(PrecedenceType.P_LOWEST)
+
+        while not self.__current_token_is(TokenType.SEMICOLON) and not self.__current_token_is(TokenType.EOF): 
+            self.__next_token()
+
+        return stmt
+
     # endregion
 
     # region Expression Methods
