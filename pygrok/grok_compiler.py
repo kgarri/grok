@@ -92,7 +92,14 @@ class Compiler:
                     value = self.builder.mul(left_value, right_value)
                 case'/': 
                     value = self.builder.sdiv(left_value, right_value)
-        if isinstance(right_type, ir.FloatType) and isinstance(left_type, ir.FloatType):
+                case '%':
+                    # "srem" = "signed int remainder"
+                    value = self.builder.srem(left_value, right_value)
+                case '^':
+                    # TODO: get exponents to work <3
+                    pass
+
+        elif isinstance(right_type, ir.FloatType) and isinstance(left_type, ir.FloatType):
             Type = self.type_map['float']
             match operator: 
                 case '+':
@@ -103,6 +110,12 @@ class Compiler:
                     value = self.builder.fmul(left_value, right_value)
                 case'/': 
                     value = self.builder.fdiv(left_value, right_value)
+                case '%':
+                    # "srem" = "signed int remainder"
+                    value = self.builder.srem(left_value, right_value)
+                case '^':
+                    # TODO: get exponents to work <3
+                    pass
 
         return value, Type 
     #endregion

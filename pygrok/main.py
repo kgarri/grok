@@ -3,7 +3,6 @@ from grok_lexer import Lexer
 from grok_compiler import Compiler
 from grok_parser import Parser 
 from grok_ast import Program 
-import json
 
 from llvmlite import ir 
 import llvmlite.binding as llvm  
@@ -50,5 +49,6 @@ if __name__ == "__main__":
     module.triple = llvm.get_default_triple()
 
     if COMPILER_DEBUG: 
+        print("===== COMPILER DEBUG =====")
         with open("debug/ir.ll", "w") as f: 
             f.write(str(module))
