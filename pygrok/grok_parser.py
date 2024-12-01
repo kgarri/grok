@@ -4,7 +4,7 @@ from typing import Callable
 from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
-from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement
+from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement
 from grok_ast import InfixExpression
 from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral
 
@@ -121,6 +121,8 @@ class Parser:
     
     # region Statement Methods
     def __parse_statement(self) -> Statement | None:
+        if self.current_token.type == TokenType.IDENT and self.__peek_token_is(TokenType.EQ): 
+            return self.__parse_assignment_statement()
         match self.current_token.type:
             case TokenType.LET: 
                 return self.__parse_let_statement()
@@ -234,6 +236,19 @@ class Parser:
             self.__next_token()
 
         return block_stmt
+    def __parse_assignment_statement(self) -> AssignStatement | None: 
+        stmt: AssignStatement = AssignStatement()
+
+        stmt.ident = IdentifierLiteral(value = self.current_token.literal)
+
+        self.__next_token()
+        self.__next_token()
+
+        stmt.right_value = self.__parse_expression(PrecedenceType.P_LOWEST)
+
+        self.__next_token()
+
+        return stmt
     # endregion
 
     # region Expression Methods

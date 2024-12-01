@@ -1,7 +1,7 @@
 from llvmlite import ir 
 
 from grok_ast import Node, NodeType, Program, Expression
-from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement
+from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement
 from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral
 from grok_ast import InfixExpression 
 from grok_environment import Environment
@@ -18,6 +18,10 @@ class Compiler:
         self.builder: ir.IRBuilder = ir.IRBuilder()
 
         self.env: Environment = Environment()
+
+        # Temporary keeping track of errors 
+        self.errors: list[str] = []
+
 
     def compile(self, node: Node) -> None: 
         if node == None: 
@@ -38,6 +42,8 @@ class Compiler:
                 self.__visit_block_statement(node)
             case NodeType.ReturnStatement: 
                 self.__visit_return_statement(node)
+            case NodeType.AssignStatement: 
+                self.__visit_assign_statement(node)
             
 
     # region Visit Methods 
@@ -112,6 +118,19 @@ class Compiler:
         self.env.define(name, func, return_type)
 
         self.builder = previous_builder
+    def __visit_assign_statement(self, node: AssignStatement) -> None: 
+        name: str | None = node.ident.value
+        value: Expression = node.right_value
+
+        value, Type = self.__resolve_value(value)
+
+        if self.env.lookup(name) is None: 
+            self.errors.append(f"COMPILE ERROR: Identifier: {name} has not been declared before it was re-assigned.")
+        else: 
+            ptr, _ = self.env.lookup(name)
+            self.builder.store(value, ptr)
+
+
     #endregion 
     
     #region Expressions 
