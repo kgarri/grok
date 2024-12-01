@@ -1,11 +1,9 @@
+import json
 from grok_lexer import Lexer 
 from grok_compiler import Compiler
 from grok_parser import Parser 
 from grok_ast import Program 
 import json
-
-
-
 
 from llvmlite import ir 
 import llvmlite.binding as llvm  
@@ -21,6 +19,17 @@ if __name__ == "__main__":
 
     if LEXER_DEBUG: 
         print("===== LEXER  DEBUG =====")
+        
+LEXER_DEBUG: bool = True
+PARSER_DEBUG: bool = True
+
+if __name__ == "__main__":
+    with open("tests/parser.gr", "r") as f:
+        code: str = f.read()
+
+    if LEXER_DEBUG: 
+        print("===== LEXER DEBUG =====")
+
         debug_lex: Lexer = Lexer(source=code)
         while debug_lex.current_char is not None: 
             print(debug_lex.next_token())
@@ -53,10 +62,3 @@ if __name__ == "__main__":
     if COMPILER_DEBUG: 
         with open("debug/ir.ll", "w") as f: 
             f.write(str(module))
-
-
-
-
-
-
-

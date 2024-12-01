@@ -9,9 +9,9 @@ class TokenType(Enum):
     #Data Types 
     INT = "INT"
     FLOAT = "FLOAT"
+    STRING = "STRING"
 
-
-    # Arithimatic Symbols 
+    # Arithematic Symbols 
     PLUS = "PLUS"
     MINUS = "MINUS"
     ASTERISK = "ASTRISK"
@@ -19,8 +19,7 @@ class TokenType(Enum):
     POW = "POW"
     MODULUS = "MODULUS"
 
-    #Symbol 
-
+    #Symbols 
     SEMICOLON = "SEMICOLON"
     LPAREN = "LPAREN"
     RPAREN = "RPAREN"
