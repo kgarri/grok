@@ -10,7 +10,7 @@ import llvmlite.binding as llvm
 from ctypes import CFUNCTYPE, c_int, c_float 
 
 LEXER_DEBUG: bool = False
-PARSER_DEBUG: bool = True
+PARSER_DEBUG: bool = False
 COMPILER_DEBUG: bool = True
 RUN_CODE: bool = True
 
@@ -31,7 +31,6 @@ if __name__ == "__main__":
 
     if PARSER_DEBUG: 
         print("===== PARSER DEBUG =====")
-        print(f'Program: {program}')
         print(f'Program Statements: {program.stmts()}')
         
         with open("debug/ast.json", "w") as f: 
