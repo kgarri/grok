@@ -11,5 +11,7 @@ main_entry:
   store i32 15, i32* %".4"
   %".6" = alloca float
   store float 0x4036000000000000, float* %".6"
+  %".8" = alloca float
+  store float 0x4010000000000000, float* %".8"
   ret i32 69
 }
