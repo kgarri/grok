@@ -99,8 +99,39 @@ class Lexer:
                 tok = self.__new_token(TokenType.POW, self.current_char)
             case '%': 
                 tok = self.__new_token(TokenType.MODULUS, self.current_char)
+            case '<':
+                #handle <= 
+                if self.__peek_char() == '=': 
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.LT_EQ, ch + self.current_char)
+                else: 
+                    tok = self.__new_token(TokenType.LT, self.current_char)
+            case '>':
+                #handle >= 
+                if self.__peek_char() == '=': 
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.GT_EQ, ch + self.current_char)
+                else: 
+                    tok = self.__new_token(TokenType.GT, self.current_char)
+            case '!':
+                #handle != 
+                if self.__peek_char() == '=': 
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.NOT_EQ, ch + self.current_char)
+                else: 
+                    tok = self.__new_token(TokenType.NOT , self.current_char)
             case '=': 
-                tok = self.__new_token(TokenType.EQ, self.current_char)
+                #handle != 
+                if self.__peek_char() == '=': 
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.EQ_EQ, ch + self.current_char)
+                else: 
+                    tok = self.__new_token(TokenType.EQ , self.current_char)
+
             case ':':
                 tok = self.__new_token(TokenType.COLON, self.current_char)
             case '(': 

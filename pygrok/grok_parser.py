@@ -4,9 +4,9 @@ from typing import Callable
 from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
-from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement
+from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement, IfStatement
 from grok_ast import InfixExpression
-from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral
+from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral, BooleanLiteral
 
 # precedence types 
 class PrecedenceType(Enum):
@@ -27,7 +27,14 @@ PRECEDENCES: dict[TokenType, PrecedenceType] = {
     TokenType.SLASH: PrecedenceType.P_PRODUCT, 
     TokenType.ASTERISK: PrecedenceType.P_PRODUCT, 
     TokenType.MODULUS: PrecedenceType.P_PRODUCT, 
-    TokenType.POW: PrecedenceType.P_EXPONENT
+    TokenType.POW: PrecedenceType.P_EXPONENT, 
+    TokenType.EQ_EQ: PrecedenceType.P_EQUALS, 
+    TokenType.NOT_EQ: PrecedenceType.P_EQUALS, 
+    TokenType.LT: PrecedenceType.P_LESSGREATER, 
+    TokenType.LT_EQ: PrecedenceType.P_LESSGREATER, 
+    TokenType.GT: PrecedenceType.P_LESSGREATER, 
+    TokenType.GT_EQ: PrecedenceType.P_LESSGREATER,
+    TokenType.NOT: PrecedenceType.P_PREFIX
 }
 
 class Parser: 
@@ -44,7 +51,10 @@ class Parser:
             TokenType.INT: self.__parse_int_literal,
             TokenType.FLOAT: self.__parse_float_literal,
             TokenType.STRING: self.__parse_string_literal,
-            TokenType.LPAREN: self.__parse_grouped_expression
+            TokenType.LPAREN: self.__parse_grouped_expression, 
+            TokenType.IF: self.__parse_if_statement, 
+            TokenType.TRUE: self.__parse_boolean,
+            TokenType.FALSE: self.__parse_boolean,
         } # ie "-"
         self.infix_parse_fns: dict[TokenType, Callable] = {
             TokenType.PLUS: self.__parse_infix_expression,
@@ -52,7 +62,13 @@ class Parser:
             TokenType.SLASH: self.__parse_infix_expression,
             TokenType.ASTERISK: self.__parse_infix_expression,
             TokenType.POW: self.__parse_infix_expression,
-            TokenType.MODULUS: self.__parse_infix_expression
+            TokenType.MODULUS: self.__parse_infix_expression,
+            TokenType.EQ_EQ: self.__parse_infix_expression, 
+            TokenType.NOT_EQ: self.__parse_infix_expression, 
+            TokenType.LT: self.__parse_infix_expression, 
+            TokenType.LT_EQ: self.__parse_infix_expression, 
+            TokenType.GT: self.__parse_infix_expression, 
+            TokenType.GT_EQ: self.__parse_infix_expression
         } # ie. operators
 
         self.__next_token()
@@ -249,6 +265,26 @@ class Parser:
         self.__next_token()
 
         return stmt
+    def __parse_if_statement(self) -> IfStatement | None: 
+        stmt: IfStatement = IfStatement ()
+        self.__next_token()
+
+        stmt.condition = self.__parse_expression(PrecedenceType.P_LOWEST)
+
+        if not self.__expect_peek(TokenType.LBRACE): 
+            return None 
+        stmt.consequence = self.__parse_block_statement()
+
+        if  self.__peek_token_is(TokenType.ELIF):
+            self.__next_token()
+            stmt.alternative = self.__parse_if_statement()
+        elif self.__peek_token_is(TokenType.ELSE): 
+            self.__next_token()
+            if not self.__expect_peek(TokenType.LBRACE): 
+                return None 
+            stmt.alternative = self.__parse_block_statement()
+        
+        return stmt
     # endregion
 
     # region Expression Methods
@@ -338,5 +374,8 @@ class Parser:
             return None
         
         return float_lit
+
+    def __parse_boolean(self) -> BooleanLiteral: 
+        return BooleanLiteral(value = self.__current_token_is(TokenType.TRUE))
     
     # endregion

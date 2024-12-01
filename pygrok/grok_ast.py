@@ -1,5 +1,7 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Union
 
 class NodeType(Enum):
     Program = "Program"
@@ -11,6 +13,7 @@ class NodeType(Enum):
     BlockStatement = "BlockStatement"
     ReturnStatement = "ReturnStatement"
     AssignStatement = "AssignStatement"
+    IfStatement = "IfStatement"
 
     # Expressions
     InfixExpression = "InfixExpression"
@@ -20,6 +23,7 @@ class NodeType(Enum):
     FloatLiteral = "FloatLiteral"
     StringLiteral = "StringLiteral"
     IdentifierLiteral = "IdentifierLiteral"
+    BooleanLiteral = "BooleanLiteral"
 
 class Node(ABC):
     @abstractmethod
@@ -60,9 +64,6 @@ class Program(Node):
 class ExpressionStatement(Statement):
     def __init__(self, expr: Expression | None  = None) -> None:
         self.expr: Expression | None  = expr
-
-    def __str__(self):
-        return f'ExpressionStatement({self.expr})'
 
     def __str__(self):
         return f'ExpressionStatement({self.expr})'
@@ -162,6 +163,22 @@ class AssignStatement(Statement):
             "ident": self.ident.json() if self.ident != None else None, 
             "right_value": self.right_value.json() if self.right_value != None else None
         }
+class IfStatement(Statement): 
+    def __init__(self, condition: Expression | None = None, consequence: BlockStatement | None  = None, alternative: IfStatement | BlockStatement | None = None) -> None:
+        self.condition = condition 
+        self.consequence = consequence 
+        self.alternative = alternative
+    
+    def type(self) -> NodeType: 
+        return NodeType.IfStatement
+    def json(self) -> dict: 
+        return { 
+            "type": self.type().value, 
+            "condition": self.condition.json() if self.condition != None else "None", 
+            "consequence": self.consequence.json() if self.consequence != None else "None", 
+            "alternative": self.alternative.json() if self.alternative != None else "None"
+        }
+
 # endregion
 
 # region Expressions
@@ -241,6 +258,22 @@ class IdentifierLiteral(Expression):
 
     def type(self) -> NodeType: 
         return NodeType.IdentifierLiteral
+    
+    def json(self) -> dict: 
+        return {
+            "type": self.type().value,
+            "value": self.value
+        }
+
+class BooleanLiteral(Expression):
+    def __init__(self, value: bool | None = None) -> None:
+        self.value: bool | None = value
+ 
+    def __str__(self):
+        return f'BooleanLiteral({self.value})'
+   
+    def type(self) -> NodeType: 
+        return NodeType.BooleanLiteral
     
     def json(self) -> dict: 
         return {

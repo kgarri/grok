@@ -1,6 +1,16 @@
 fn main() -> int {
-    let a: int = 4; 
-    a = a * 2;
+    let a: int = 3; 
+
+    if a == 4 {
+        a = a * 2;
+    } 
+    elif a == 3 {
+        a = a * 3;
+    } 
+    else { 
+        a = a/2;
+    }
+
     return a; 
 }
 

@@ -1,8 +1,8 @@
 from llvmlite import ir 
 
 from grok_ast import Node, NodeType, Program, Expression
-from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement
-from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral
+from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement, IfStatement
+from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral, BooleanLiteral
 from grok_ast import InfixExpression 
 from grok_environment import Environment
 
@@ -10,7 +10,8 @@ class Compiler:
     def __init__(self) -> None: 
         self.type_map: dict[str, ir.Type] = {
             'int' : ir.IntType(32),
-            'float' : ir.FloatType()
+            'float' : ir.FloatType(), 
+            'bool' : ir.IntType(1)
         }
 
         self.module: ir.Module = ir.Module('main')
@@ -22,6 +23,24 @@ class Compiler:
         # Temporary keeping track of errors 
         self.errors: list[str] = []
 
+        self.__initialize_builtins()
+
+    def __initialize_builtins(self) -> None:
+        def __init_booleans() -> tuple[ir.GlobalVariable, ir.GlobalVariable]: 
+            bool_type: ir.Type = self.type_map['bool']
+
+            true_var = ir.GlobalVariable(self.module, bool_type, 'true')
+            true_var.initializer = ir.Constant(bool_type, 1)
+            true_var.global_constant = True
+
+            false_var = ir.GlobalVariable(self.module, bool_type, 'false')
+            false_var.initializer = ir.Constant(bool_type, 0)
+            false_var.global_constant = False
+            
+            return true_var, false_var 
+        true_var, false_var = __init_booleans()
+        self.env.define('true', true_var, true_var.type)
+        self.env.define('false', false_var, false_var.type)
 
     def compile(self, node: Node) -> None: 
         if node == None: 
@@ -44,6 +63,8 @@ class Compiler:
                 self.__visit_return_statement(node)
             case NodeType.AssignStatement: 
                 self.__visit_assign_statement(node)
+            case NodeType.IfStatement: 
+                self.__visit_if_statement(node)
             
 
     # region Visit Methods 
@@ -129,6 +150,24 @@ class Compiler:
         else: 
             ptr, _ = self.env.lookup(name)
             self.builder.store(value, ptr)
+    def __visit_if_statement(self, node: IfStatement) -> None: 
+        condition = node.condition 
+        consequence = node.consequence 
+        alternative = node.alternative 
+
+        test, _ = self.__resolve_value(condition)
+
+        if alternative is None: 
+            with self.builder.if_then(test): 
+                self.compile(consequence)
+        else: 
+            with self.builder.if_else(test) as (true, otherwise):
+                with true:
+                    self.compile(consequence)
+                with otherwise:
+                    self.compile(alternative)
+
+                    
 
 
     #endregion 
@@ -159,6 +198,24 @@ class Compiler:
                 case '^':
                     # TODO: get exponents to work <3
                     pass
+                case '<': 
+                    value  = self.builder.icmp_signed('<', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '>': 
+                    value  = self.builder.icmp_signed('>', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '<=': 
+                    value  = self.builder.icmp_signed('<=', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '>=': 
+                    value  = self.builder.icmp_signed('>=', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '==': 
+                    value  = self.builder.icmp_signed('==', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '!=': 
+                    value  = self.builder.icmp_signed('!=', left_value, right_value)
+                    Type = ir.IntType(1)
 
         elif isinstance(right_type, ir.FloatType) and isinstance(left_type, ir.FloatType):
             Type = self.type_map['float']
@@ -173,10 +230,29 @@ class Compiler:
                     value = self.builder.fdiv(left_value, right_value)
                 case '%':
                     # "srem" = "signed int remainder"
-                    value = self.builder.srem(left_value, right_value)
+                    value = self.builder.frem(left_value, right_value)
                 case '^':
                     # TODO: get exponents to work <3
                     pass
+                case '<': 
+                    value  = self.builder.fcmp_ordered('<', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '>': 
+                    value  = self.builder.fcmp_ordered('>', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '<=': 
+                    value  = self.builder.fcmp_ordered('<=', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '>=': 
+                    value  = self.builder.fcmp_ordered('>=', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '==': 
+                    value  = self.builder.fcmp_ordered('==', left_value, right_value)
+                    Type = ir.IntType(1)
+                case '!=': 
+                    value  = self.builder.fcmp_ordered('!=', left_value, right_value)
+                    Type = ir.IntType(1)
+
 
         return value, Type 
     #endregion
@@ -186,7 +262,7 @@ class Compiler:
     #region Helper Methods
     def __resolve_value(self, node: Expression, value_type: str = None) -> tuple[ir.Value, ir.Type]:
         match node.type(): 
-            case NodeType.IntegerLiteral:  
+            case NodeType.IntegerLiteral:
                 value, Type = node.value, self.type_map["int" if value_type is None else value_type]
                 return ir.Constant(Type , value), Type 
             case NodeType.FloatLiteral: 
@@ -195,6 +271,9 @@ class Compiler:
             case NodeType.IdentifierLiteral: 
                 ptr,Type = self.env.lookup(node.value)
                 return self.builder.load(ptr), Type
+            case NodeType.BooleanLiteral: 
+                return ir.Constant(ir.IntType(1), 1 if node.value else 0), ir.IntType(1)
+
 
             # Expression Values
             case NodeType.InfixExpression: 
