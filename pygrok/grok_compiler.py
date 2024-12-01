@@ -32,11 +32,11 @@ class Compiler:
             case NodeType.InfixExpression:
                 self.__visit_infix_expression(node)
             case NodeType.FunctionStatement:
-                self.visit_function_statement(node)
+                self.__visit_function_statement(node)
             case NodeType.BlockStatement: 
-                self.visit_block_statement(node)
+                self.__visit_block_statement(node)
             case NodeType.ReturnStatement: 
-                self.visit_return_statement(node)
+                self.__visit_return_statement(node)
             
             # expressions
             case NodeType.InfixExpression:
@@ -52,7 +52,7 @@ class Compiler:
         self.compile(node.expr)
 
     def __visit_let_statement(self, node: LetStatement) -> None:
-        name: str = node.name.Value
+        name: str = node.name.value
         value: Expression = node.value
         value_type: str = node.value_type
 
@@ -83,8 +83,8 @@ class Compiler:
 
     def __visit_function_statement(self, node: FunctionStatement) -> None:
         name: str = node.name.value
-        body = BlockStatement = node.body
-        params = list[IdentifierLiteral] = node.parameters
+        body: BlockStatement = node.body
+        params: list[IdentifierLiteral] = node.parameters
 
         # track param names
         param_names: list[str] = [p.value for p in params]
@@ -99,7 +99,7 @@ class Compiler:
     
         block: ir.Block = func.append_basic_block(f'{name}_entry')
 
-        previous_builder: self.builder
+        previous_builder = self.builder
 
         self.builder = ir.IRBuilder(block)
 

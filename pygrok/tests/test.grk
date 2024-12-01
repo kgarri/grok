@@ -1,6 +1,5 @@
-fn main() 8> int {
+fn main() -> int {
     let a: int = 4; 
 
     return a; 
 }
-

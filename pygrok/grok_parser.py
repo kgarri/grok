@@ -77,7 +77,7 @@ class Parser:
             return True
         else:
             self.__peek_error(tt)
-            return False; 
+            return False 
 
     # check precedence (current)
     def __current_precedence(self) -> PrecedenceType:
@@ -113,10 +113,12 @@ class Parser:
 
             self.__next_token()
 
+        print("Parsed entire program.")
         return program 
     
     # region Statement Methods
     def __parse_statement(self) -> Statement:
+        #print(f'Parsing statement. Current token: {self.current_token}. Current token type: {self.current_token.type}')
         match self.current_token.type:
             case TokenType.LET: 
                 return self.__parse_let_statement()
@@ -133,6 +135,7 @@ class Parser:
         if self.__peek_token_is(TokenType.SEMICOLON):
             self.__next_token()
 
+        print(f'self: {self} expr: {expr}')
         stmt: ExpressionStatement = ExpressionStatement(expr=expr)
 
         return stmt
@@ -172,26 +175,32 @@ class Parser:
         # fn name() 8> int { return 10; }
 
         if not self.__expect_peek(TokenType.IDENT):
+            print("ERROR: NO IDENTIFIER")
             return None
         
         stmt.name = IdentifierLiteral(value=self.current_token.literal)
 
         if not self.__expect_peek(TokenType.LPAREN):
+            print("ERROR: NO LPAREN")
             return None
         
         stmt.parameters = []
         if not self.__expect_peek(TokenType.RPAREN):
+            print("ERROR: NO RPAREN")
             return None
         
         if not self.__expect_peek(TokenType.ARROW):
+            print("ERROR: NO ARROW")
             return None
         
         if not self.__expect_peek(TokenType.TYPE):
+            print("ERROR: NO TYPE")
             return None
         
         stmt.return_type = self.current_token.literal
 
         if not self.__expect_peek(TokenType.LBRACE):
+            print('ERROR: FOUND NO LBRACE.')
             return None
         
         stmt.body = self.__parse_block_statement()
@@ -229,11 +238,13 @@ class Parser:
     def __parse_expression(self, precedence: PrecedenceType) -> Expression:
         
         prefix_fn: Callable | None = self.prefix_parse_fns.get(self.current_token.type)
+        print(f'PREFIX_FN FOUND: {prefix_fn} in {self.current_token.type}')
         if prefix_fn is None: 
             self.__no_prefix_parse_fn_error(self.current_token.type)
             return None
         
         left_expr: Expression = prefix_fn()
+        print(f'LEFT_EXPR FOUND: {left_expr}')
         while not self.__peek_token_is(TokenType.SEMICOLON) and precedence.value < self.__peek_precedence().value:
             infix_fn: Callable | None = self.infix_parse_fns.get(self.peek_token.type)
             if infix_fn is None:
@@ -243,6 +254,7 @@ class Parser:
 
             left_expr = infix_fn(left_expr)
 
+        print(f'FINISHED LEFT_EXPR: {left_expr}')
         return left_expr
 
     def __parse_infix_expression(self, left_node: Expression) -> Expression:

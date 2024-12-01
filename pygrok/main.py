@@ -15,7 +15,7 @@ COMPILER_DEBUG: bool = True
 RUN_CODE: bool = True
 
 if __name__ == "__main__":
-    with open("tests/math.grk", "r") as f:
+    with open("tests/test.grk", "r") as f:
         code: str = f.read()
 
     if LEXER_DEBUG: 
@@ -31,6 +31,8 @@ if __name__ == "__main__":
 
     if PARSER_DEBUG: 
         print("===== PARSER DEBUG =====")
+        print(f'Program: {program}')
+        print(f'Program Statements: {program.stmts()}')
         
         with open("debug/ast.json", "w") as f: 
             json.dump(program.json(), f, indent=4)

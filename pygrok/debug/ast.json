@@ -2,19 +2,37 @@
     "type": "Program",
     "statements": [
         {
-            "ExpressionStatement": {
-                "type": "ExpressionStatement",
-                "expr": {
-                    "type": "InfixExpression",
-                    "left_node": {
-                        "type": "IntegerLiteral",
-                        "value": 5
-                    },
-                    "operator": "+",
-                    "right_node": {
-                        "type": "IntegerLiteral",
-                        "value": 5
-                    }
+            "FunctionStatement": {
+                "type": "FunctionStatement",
+                "name": {
+                    "type": "IdentifierLiteral",
+                    "value": "main"
+                },
+                "return_type": "int",
+                "parameters": [],
+                "body": {
+                    "type": "BlockStatement",
+                    "statements": [
+                        {
+                            "type": "LetStatement",
+                            "name": {
+                                "type": "IdentifierLiteral",
+                                "value": "a"
+                            },
+                            "value": {
+                                "type": "IntegerLiteral",
+                                "value": 4
+                            },
+                            "value_type": "int"
+                        },
+                        {
+                            "type": "ReturnStatement",
+                            "return_value": {
+                                "type": "IdentifierLiteral",
+                                "value": "a"
+                            }
+                        }
+                    ]
                 }
             }
         }

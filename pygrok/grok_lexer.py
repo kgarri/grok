@@ -85,7 +85,12 @@ class Lexer:
             case '+': 
                 tok = self.__new_token(TokenType.PLUS, self.current_char)
             case '-':
-                tok = self.__new_token(TokenType.MINUS, self.current_char)
+                if self.__peek_char() == '>':
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.ARROW, ch + self.current_char)
+                else: 
+                    tok = self.__new_token(TokenType.MINUS, self.current_char)
             case '*': 
                 tok = self.__new_token(TokenType.ASTERISK, self.current_char)
             case '/': 
@@ -99,21 +104,15 @@ class Lexer:
             case ':':
                 tok = self.__new_token(TokenType.COLON, self.current_char)
             case '(': 
-                tok = self.__new_token(TokenType.RPAREN, self.current_char)
-            case ')': 
                 tok = self.__new_token(TokenType.LPAREN, self.current_char)
+            case ')': 
+                tok = self.__new_token(TokenType.RPAREN, self.current_char)
             case '{':
                 tok = self.__new_token(TokenType.LBRACE, self.current_char)
             case '}':
                 tok = self.__new_token(TokenType.RBRACE, self.current_char)
             case ";":
                 tok = self.__new_token(TokenType.SEMICOLON, self.current_char)
-            case "8": 
-                # start of an arrow 
-                if self.__peek_char() == '>':
-                    ch = self.current_char
-                    self.__read_char()
-                    tok = self.__new_token(TokenType.ARROW, ch + self.current_char)
             case None: 
                 tok = self.__new_token(TokenType.EOF, "")
             case _:

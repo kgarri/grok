@@ -40,6 +40,12 @@ class Program(Node):
     def __init__(self):
         self.statements: list[Statement] = []
 
+    def stmts(self) -> list[Statement]:
+        result = []
+        for stmt in self.statements:
+            result.append(str(stmt))
+        return result
+
     def type(self) -> NodeType:
         return NodeType.Program
     
@@ -53,6 +59,9 @@ class Program(Node):
 class ExpressionStatement(Statement):
     def __init__(self, expr: Expression = None):
         self.expr: Expression = expr
+
+    def __str__(self):
+        return f'ExpressionStatement({self.expr})'
 
     def type(self) -> NodeType: 
         return NodeType.ExpressionStatement
@@ -69,6 +78,9 @@ class LetStatement(Statement):
         self.value = value 
         self.value_type = value_type
     
+    def __str__(self):
+        return f'LetStatement(name={self.name}, value={self.value},value type={self.value_type})'
+    
     def type(self) -> NodeType: 
         return NodeType.LetStatement
 
@@ -84,6 +96,9 @@ class BlockStatement(Statement):
     def __init__(self, statements: list[Statement] = None) -> None:
         self.statements = statements if statements is not None else []
     
+    def __str__(self):
+        return f'BlockStatement({self.statements})'
+
     def type(self) -> NodeType:
         return NodeType.BlockStatement
     
@@ -96,6 +111,9 @@ class BlockStatement(Statement):
 class ReturnStatement(Statement):
     def __init__(self, return_value: Expression = None) -> None:
         self.return_value = return_value
+
+    def __str__(self):
+        return f'ReturnStatement({str(self.return_value)})'
     
     def type(self) -> NodeType:
         return NodeType.ReturnStatement
@@ -112,6 +130,9 @@ class FunctionStatement(Statement):
         self.body = body
         self.name = name
         self.return_type = return_type
+
+    def __str__(self):
+        return f'FunctionStatement(name={self.name}, parameters={self.parameters}, body={self.body}, return type={self.return_type})'
 
     def type(self) -> NodeType:
         return NodeType.FunctionStatement
@@ -149,6 +170,9 @@ class InfixExpression(Expression):
 class IntegerLiteral(Expression):
     def __init__(self, value: int = None) -> None:
         self.value: int = value
+
+    def __str__(self):
+        return f'IntegerLiteral({self.value})'
     
     def type(self) -> NodeType: 
         return NodeType.IntegerLiteral
@@ -162,6 +186,9 @@ class IntegerLiteral(Expression):
 class FloatLiteral(Expression):
     def __init__(self, value: float = None) -> None:
         self.value: float = value
+
+    def __str__(self):
+        return f'FloatLiteral({self.value})'
     
     def type(self) -> NodeType: 
         return NodeType.FloatLiteral
@@ -175,6 +202,9 @@ class FloatLiteral(Expression):
 class StringLiteral(Expression):
     def __init__(self, value: str = None) -> None:
         self.value: str = value
+
+    def __str__(self):
+        return f'StringLiteral({self.value})'
     
     def type(self) -> NodeType: 
         return NodeType.StringLiteral
@@ -184,9 +214,13 @@ class StringLiteral(Expression):
             "type": self.type().value,
             "value": self.value
         }
+    
 class IdentifierLiteral(Expression):
     def __init__(self, value: str = None) -> None:
         self.value: str = value
+
+    def __str__(self):
+        return f'IdentifierLiteral({self.value})'
     
     def type(self) -> NodeType: 
         return NodeType.IdentifierLiteral
