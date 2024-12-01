@@ -1,8 +1,8 @@
 from llvmlite import ir 
 
-from AST import Node, NodeType, Program, Expression, Statement 
-from AST import ExpressionStatement, InfixExpression 
-from AST import IntegerLiteral, FloatLiteral 
+from grok_ast import Node, NodeType, Program, Expression, Statement 
+from grok_ast import ExpressionStatement, InfixExpression 
+from grok_ast import IntegerLiteral, FloatLiteral 
 
 class Compiler:
     def __init__(self) -> None: 
