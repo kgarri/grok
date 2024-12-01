@@ -1,5 +1,7 @@
-fn main() -> int  {
-    let a: int = 5; 
+fn main() 8> int {
+    let a: int = 4; 
 
-    return a;
+    return a; 
 }
+
+

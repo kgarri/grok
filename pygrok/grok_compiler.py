@@ -52,8 +52,8 @@ class Compiler:
         name: str = node.name.value
         value: Expression | None = node.value
         value_type: str = node.value_type
-
         value, Type  = self.__resolve_value(node=value)        
+
 
         if self.env.lookup(name) is None:
             #define and allocate
