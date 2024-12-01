@@ -17,6 +17,7 @@ class NodeType(Enum):
 
     # Expressions
     InfixExpression = "InfixExpression"
+    CallExpression = "CallExpression"
 
     # Literals
     IntegerLiteral = "IntegerLiteral"
@@ -102,7 +103,7 @@ class BlockStatement(Statement):
         self.statements = statements if statements is not None else []
     
     def __str__(self):
-        return f'BlockStatement({self.statements})'
+        return f'BlockStatement({str(self.statements)})'
 
     def type(self) -> NodeType:
         return NodeType.BlockStatement
@@ -197,6 +198,21 @@ class InfixExpression(Expression):
             "left_node": self.left_node.json(),
             "operator": self.operator, 
             "right_node": self.right_node.json() if self.right_node != None else "None"
+        }
+    
+class CallExpression(Expression):
+    def __init__(self, function: Expression = None, arguments: list[Expression] = None) -> None:
+        self.function = function
+        self.arguments = arguments
+
+    def type(self) -> NodeType:
+        return NodeType.CallExpression
+    
+    def json(self) -> dict:
+        return {
+            "type": self.type().value, 
+            "function": self.function.json(), # function name (identifier)
+            "arguments": [arg.json() for arg in self.arguments]
         }
 # endregion
 

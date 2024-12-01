@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
 from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement, IfStatement
-from grok_ast import InfixExpression
+from grok_ast import InfixExpression, CallExpression
 from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral, BooleanLiteral
 
 # precedence types 
@@ -292,13 +292,11 @@ class Parser:
         if self.current_token.type == None:
             return None
         prefix_fn: Callable | None = self.prefix_parse_fns.get(self.current_token.type)
-        print(f'PREFIX_FN FOUND: {prefix_fn} in {self.current_token.type}')
         if prefix_fn is None: 
             self.__no_prefix_parse_fn_error(self.current_token.type)
             return None
         
         left_expr: Expression = prefix_fn()
-        print(f'LEFT_EXPR FOUND: {left_expr}')
         while not self.__peek_token_is(TokenType.SEMICOLON) and precedence.value < self.__peek_precedence().value:
             if self.peek_token.type == None:
                 return left_expr
@@ -310,7 +308,6 @@ class Parser:
 
             left_expr = infix_fn(left_expr)
 
-        print(f'FINISHED LEFT_EXPR: {left_expr}')
         return left_expr
 
     def __parse_infix_expression(self, left_node: Expression) -> Expression:
@@ -328,6 +325,15 @@ class Parser:
 
         expr: Expression | None = self.__parse_expression(PrecedenceType.P_LOWEST)
 
+        if not self.__expect_peek(TokenType.RPAREN):
+            return None
+        
+        return expr
+
+    def __parse_call_expression(self, function: Expression) -> CallExpression:
+        expr: CallExpression = CallExpression(function=function)
+        expr.arguments = [] # todo function args
+        
         if not self.__expect_peek(TokenType.RPAREN):
             return None
         

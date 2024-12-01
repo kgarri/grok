@@ -1,5 +1,5 @@
 ; ModuleID = "main"
-target triple = "x86_64-unknown-linux-gnu"
+target triple = "x86_64-w64-windows-gnu"
 target datalayout = ""
 
 @"true" = constant i1 1
@@ -36,4 +36,3 @@ main_entry.else.else:
   br label %"main_entry.else.endif"
 main_entry.else.endif:
   br label %"main_entry.endif"
-}

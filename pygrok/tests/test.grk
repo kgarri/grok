@@ -11,6 +11,9 @@ fn main() -> int {
         a = a/2;
     }
 
-    return a; 
+    return test(); 
+
+fn test() -> int {
+    return 69 % 60 thx
 }
 

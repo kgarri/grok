@@ -3,7 +3,7 @@ from llvmlite import ir
 from grok_ast import Node, NodeType, Program, Expression
 from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement, IfStatement
 from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral, BooleanLiteral
-from grok_ast import InfixExpression 
+from grok_ast import InfixExpression, CallExpression 
 from grok_environment import Environment
 
 class Compiler:
@@ -65,8 +65,9 @@ class Compiler:
                 self.__visit_assign_statement(node)
             case NodeType.IfStatement: 
                 self.__visit_if_statement(node)
+            case NodeType.CallExpression: 
+                self.__visit_call_expression(node)
             
-
     # region Visit Methods 
     def __visit_program(self, node: Program) -> None: 
         for stmt in node.statements:
@@ -104,6 +105,7 @@ class Compiler:
         value: Expression | None = node.return_value
         value, Type = self.__resolve_value(value)
 
+        print(f'Value: {value}, Type: {Type}')
         self.builder.ret(value)
 
     def __visit_function_statement(self, node: FunctionStatement) -> None:
@@ -255,6 +257,25 @@ class Compiler:
 
 
         return value, Type 
+    
+    def __visit_call_expression(self, node: CallExpression) -> None: 
+        name: str = node.function.value
+        params: list[Expression] = node.arguments
+
+        args = []
+        types = []
+
+        match name: 
+            case 'printf':
+                #TODO: implement printf
+                pass
+            # all other possible function names here
+            case _:
+                func, ret_type = self.env.lookup(name)
+                ret = self.builder.call(func, args)
+
+        return ret, ret_type
+
     #endregion
 
     #endregion
@@ -278,6 +299,7 @@ class Compiler:
             # Expression Values
             case NodeType.InfixExpression: 
                 return self.__visit_infix_expression(node)
-            
+            case NodeType.CallExpression:
+                return self.__visit_call_expression(node)
 
     #endregion
