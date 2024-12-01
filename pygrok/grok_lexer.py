@@ -21,13 +21,21 @@ class Lexer:
 
             self.position = self.read_position
             self.read_position += 1 
+
+    def __peek_char(self) -> str | None: 
+        """Peeks at upcoming char without advancing lexer pos"""
+        if self.read_position >= len(self.source):
+            return None
+        
+        return self.source[self.read_position]
+    
     def __skip_whitespace(self) -> None: 
         while self.current_char in [' ', '\t', '\n', '\r']:
             if self.current_char == '\n':
                 self.line_no +=1 
             self.__read_char()
 
-    
+
     def __new_token(self, tt: TokenType, literal: Any) -> Token:
         return Token(type=tt, literal = literal, line_no = self.line_no, position= self.position)
     
@@ -76,7 +84,7 @@ class Lexer:
         match self.current_char:
             case '+': 
                 tok = self.__new_token(TokenType.PLUS, self.current_char)
-            case '-': 
+            case '-':
                 tok = self.__new_token(TokenType.MINUS, self.current_char)
             case '*': 
                 tok = self.__new_token(TokenType.ASTERISK, self.current_char)
@@ -94,8 +102,18 @@ class Lexer:
                 tok = self.__new_token(TokenType.RPAREN, self.current_char)
             case ')': 
                 tok = self.__new_token(TokenType.LPAREN, self.current_char)
+            case '{':
+                tok = self.__new_token(TokenType.LBRACE, self.current_char)
+            case '}':
+                tok = self.__new_token(TokenType.RBRACE, self.current_char)
             case ";":
                 tok = self.__new_token(TokenType.SEMICOLON, self.current_char)
+            case "8": 
+                # start of an arrow 
+                if self.__peek_char() == '>':
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.ARROW, ch + self.current_char)
             case None: 
                 tok = self.__new_token(TokenType.EOF, "")
             case _:

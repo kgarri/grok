@@ -2,46 +2,20 @@
     "type": "Program",
     "statements": [
         {
-            "LetStatement": {
-                "type": "LetStatement",
-                "name": {
-                    "type": "IdentifierLiteral",
-                    "value": "a"
-                },
-                "value": {
-                    "type": "IntegerLiteral",
-                    "value": 10
-                },
-                "value_type": "int"
-            }
-        },
-        {
-            "LetStatement": {
-                "type": "LetStatement",
-                "name": {
-                    "type": "IdentifierLiteral",
-                    "value": "b"
-                },
-                "value": {
-                    "type": "IntegerLiteral",
-                    "value": 15
-                },
-                "value_type": "int"
-            }
-        },
-        {
-            "LetStatement": {
-                "type": "LetStatement",
-                "name": {
-                    "type": "IdentifierLiteral",
-                    "value": "c"
-                },
-                "value": {
-                    "type": "FloatLiteral",
-                    "value": 22
-                },
-                "value_type": "float"
-           
+            "ExpressionStatement": {
+                "type": "ExpressionStatement",
+                "expr": {
+                    "type": "InfixExpression",
+                    "left_node": {
+                        "type": "IntegerLiteral",
+                        "value": 5
+                    },
+                    "operator": "+",
+                    "right_node": {
+                        "type": "IntegerLiteral",
+                        "value": 5
+                    }
+                }
             }
         }
     ]

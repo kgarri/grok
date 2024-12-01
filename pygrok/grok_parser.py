@@ -4,7 +4,7 @@ from typing import Callable
 from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
-from grok_ast import ExpressionStatement, LetStatement
+from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement
 from grok_ast import InfixExpression
 from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral
 
@@ -30,18 +30,17 @@ PRECEDENCES: dict[TokenType, PrecedenceType] = {
     TokenType.POW: PrecedenceType.P_EXPONENT
 }
 
-# parser class
 class Parser: 
     def __init__(self, lexer: Lexer) -> None:
         self.lexer: Lexer = lexer
 
-        # print errs as generated
         self.errors: list[str] = []
 
         self.current_token: Token = None # current tok
         self.peek_token: Token = None # next tok
 
         self.prefix_parse_fns: dict[TokenType, Callable] = {
+            TokenType.IDENT: self.__parse_identifier,
             TokenType.INT: self.__parse_int_literal,
             TokenType.FLOAT: self.__parse_float_literal,
             TokenType.STRING: self.__parse_string_literal,
@@ -96,11 +95,11 @@ class Parser:
 
     # append error to errors list 
     def __peek_error(self, tt: TokenType) -> None: 
-        self.errors.append("Expected next token to be {tt}, got {self.peek_token.type} instead.")
+        self.errors.append(f'Expected next token to be {tt}, got {self.peek_token.type} instead.')
     
     # used when checking prefix parse function - checks that token exists
     def __no_prefix_parse_fn_error(self, tt: TokenType) -> None: 
-        self.errors.append("No Prefix Parse function for {tt} found.")
+        self.errors.append(f'No Prefix Parse function for {tt} found.')
     
     # endregion 
 
@@ -118,9 +117,13 @@ class Parser:
     
     # region Statement Methods
     def __parse_statement(self) -> Statement:
-        match self.current_token.type: 
+        match self.current_token.type:
             case TokenType.LET: 
                 return self.__parse_let_statement()
+            case TokenType.FN: 
+                return self.__parse_function_statement()
+            case TokenType.RETURN: 
+                return self.__parse_return_statement()
             case _:
                 return self.__parse_expression_statement()
     
@@ -133,6 +136,7 @@ class Parser:
         stmt: ExpressionStatement = ExpressionStatement(expr=expr)
 
         return stmt
+    
     def __parse_let_statement(self) -> LetStatement: 
         #let a: int = 10; 
         stmt: LetStatement = LetStatement()
@@ -146,7 +150,7 @@ class Parser:
             return None
         
         if not self.__expect_peek(TokenType.TYPE):
-            return None
+            return None 
         
         stmt.value_type = self.current_token.literal 
 
@@ -162,6 +166,63 @@ class Parser:
 
         return stmt
 
+    def __parse_function_statement(self) -> FunctionStatement:
+        stmt: FunctionStatement = FunctionStatement()
+
+        # fn name() 8> int { return 10; }
+
+        if not self.__expect_peek(TokenType.IDENT):
+            return None
+        
+        stmt.name = IdentifierLiteral(value=self.current_token.literal)
+
+        if not self.__expect_peek(TokenType.LPAREN):
+            return None
+        
+        stmt.parameters = []
+        if not self.__expect_peek(TokenType.RPAREN):
+            return None
+        
+        if not self.__expect_peek(TokenType.ARROW):
+            return None
+        
+        if not self.__expect_peek(TokenType.TYPE):
+            return None
+        
+        stmt.return_type = self.current_token.literal
+
+        if not self.__expect_peek(TokenType.LBRACE):
+            return None
+        
+        stmt.body = self.__parse_block_statement()
+
+        return stmt 
+
+    def __parse_return_statement(self) -> ReturnStatement:
+        stmt: ReturnStatement = ReturnStatement()
+
+        self.__next_token()
+
+        stmt.return_value = self.__parse_expression(PrecedenceType.P_LOWEST)
+
+        if not self.__expect_peek(TokenType.SEMICOLON):
+            return None
+        
+        return stmt
+
+    def __parse_block_statement(self) -> BlockStatement:
+        block_stmt: BlockStatement = BlockStatement()
+
+        self.__next_token()
+
+        while not self.__current_token_is(TokenType.RBRACE) and not self.__current_token_is(TokenType.EOF):
+            stmt: Statement = self.__parse_statement()
+            if stmt is not None: 
+                block_stmt.statements.append(stmt)
+
+            self.__next_token()
+
+        return block_stmt
     # endregion
 
     # region Expression Methods
@@ -207,6 +268,9 @@ class Parser:
     # endregion
 
     # region Prefix Methods
+    def __parse_identifier(self) -> IdentifierLiteral: 
+        return IdentifierLiteral(value=self.current_token.literal)
+
     def __parse_string_literal(self) -> Expression:
         """Parses StringLiteral from current token"""
         str_lit: StringLiteral = StringLiteral()

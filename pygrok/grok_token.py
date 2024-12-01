@@ -19,17 +19,23 @@ class TokenType(Enum):
     SLASH = "SLASH"
     POW = "POW"
     MODULUS = "MODULUS"
-    
+
     #Assignment Symbols 
     EQ = "EQ"
+
     #Symbols 
     COLON = "COLON"
     SEMICOLON = "SEMICOLON"
+    ARROW = "ARROW"
     LPAREN = "LPAREN"
     RPAREN = "RPAREN"
+    LBRACE = "LBRACE"
+    RBRACE = "RBRACE"
 
-    #keywords 
+    # Keywords
     LET = "LET"
+    FN = "FN"
+    RETURN = "RETURN"
 
     # Typing
     TYPE = "TYPE"
@@ -45,15 +51,20 @@ class Token:
     def __repr__(self) -> str: 
         return str(self)
 
-        
+
 KEYWORDS: dict[str, TokenType] = {
-    "let": TokenType.LET
+    "let": TokenType.LET, 
+    "fn": TokenType.FN,
+    "return": TokenType.RETURN
 }
 
-ALT_KEYWORDS: dict[str, TokenType] = { 
+ALT_KEYWORDS: dict[str, TokenType] = {
     "pls": TokenType.LET,
     "be": TokenType.EQ,
-    "thanks": TokenType.SEMICOLON
+    "thx": TokenType.SEMICOLON,
+    "fn": TokenType.FN,
+    "return": TokenType.RETURN,
+    "arrow": TokenType.ARROW
 }
 
 TYPE_KEYWORDS: list[str] = ["int", "float"]
