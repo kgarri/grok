@@ -57,8 +57,8 @@ class Program(Node):
     
 # region Statements
 class ExpressionStatement(Statement):
-    def __init__(self, expr: Expression = None):
-        self.expr: Expression = expr
+    def __init__(self, expr: Expression | None  = None) -> None:
+        self.expr: Expression | None  = expr
 
     def __str__(self):
         return f'ExpressionStatement({self.expr})'
@@ -69,11 +69,11 @@ class ExpressionStatement(Statement):
     def json(self) -> dict:
         return {
             "type": self.type().value, 
-            "expr": self.expr.json()
+            "expr": self.expr.json() if self.expr != None else "None"
         }
     
 class LetStatement(Statement): 
-    def __init__(self, name: Expression = None, value: Expression = None, value_type: str = None) -> None: 
+    def __init__(self, name: Expression | None = None, value: Expression | None = None, value_type: str | None = None) -> None: 
         self.name = name 
         self.value = value 
         self.value_type = value_type
@@ -87,13 +87,13 @@ class LetStatement(Statement):
     def json(self) -> dict: 
         return {
             "type": self.type().value, 
-            "name": self.name.json(), 
-            "value": self.value.json(), 
+            "name": self.name.json() if self.name != None else "None", 
+            "value": self.value.json() if self.value != None else "None", 
             "value_type": self.value_type
         }
 
 class BlockStatement(Statement):
-    def __init__(self, statements: list[Statement] = None) -> None:
+    def __init__(self, statements: list[Statement] | None= None) -> None:
         self.statements = statements if statements is not None else []
     
     def __str__(self):
@@ -109,7 +109,7 @@ class BlockStatement(Statement):
         }
     
 class ReturnStatement(Statement):
-    def __init__(self, return_value: Expression = None) -> None:
+    def __init__(self, return_value: Expression | None = None) -> None:
         self.return_value = return_value
 
     def __str__(self):
@@ -121,11 +121,11 @@ class ReturnStatement(Statement):
     def json(self) -> dict:
         return {
             "type": self.type().value,
-            "return_value": self.return_value.json()
+            "return_value": self.return_value.json() if self.return_value != None else "None"
         }
     
 class FunctionStatement(Statement):
-    def __init__(self, parameters: list = [], body: BlockStatement = None, name = None, return_type: str = None) -> None:
+    def __init__(self, parameters: list = [], body: BlockStatement | None = None, name = None, return_type: str | None = None) -> None:
         self.parameters = parameters
         self.body = body
         self.name = name
@@ -140,19 +140,19 @@ class FunctionStatement(Statement):
     def json(self) -> dict:
         return {
             "type": self.type().value,
-            "name": self.name.json(),
+            "name": self.name.json() if self.name != None else "None",
             "return_type": self.return_type, 
             "parameters": [p.json() for p in self.parameters],
-            "body": self.body.json()
+            "body": self.body.json() if self.body != None else "None"
         }
 # endregion
 
 # region Expressions
 class InfixExpression(Expression):
-    def __init__(self, left_node: Expression, operator: str, right_node: Expression = None) -> None:
+    def __init__(self, left_node: Expression, operator: str, right_node: Expression | None = None) -> None:
         self.left_node: Expression = left_node
         self.operator: str = operator
-        self.right_node: Expression = right_node
+        self.right_node: Expression | None = right_node
 
     def type(self) -> NodeType:
         return NodeType.InfixExpression
@@ -162,14 +162,14 @@ class InfixExpression(Expression):
             "type": self.type().value,
             "left_node": self.left_node.json(),
             "operator": self.operator, 
-            "right_node": self.right_node.json()
+            "right_node": self.right_node.json() if self.right_node != None else "None"
         }
 # endregion
 
 # region Literals
 class IntegerLiteral(Expression):
-    def __init__(self, value: int = None) -> None:
-        self.value: int = value
+    def __init__(self, value: int | None = None) -> None:
+        self.value: int | None = value
 
     def __str__(self):
         return f'IntegerLiteral({self.value})'
@@ -184,12 +184,12 @@ class IntegerLiteral(Expression):
         }
 
 class FloatLiteral(Expression):
-    def __init__(self, value: float = None) -> None:
-        self.value: float = value
+    def __init__(self, value: float | None = None) -> None:
+        self.value: float | None = value
 
     def __str__(self):
         return f'FloatLiteral({self.value})'
-    
+   
     def type(self) -> NodeType: 
         return NodeType.FloatLiteral
     
@@ -200,12 +200,12 @@ class FloatLiteral(Expression):
         }
     
 class StringLiteral(Expression):
-    def __init__(self, value: str = None) -> None:
-        self.value: str = value
-
+    def __init__(self, value: str | None = None) -> None:
+        self.value: str | None = value
+ 
     def __str__(self):
         return f'StringLiteral({self.value})'
-    
+   
     def type(self) -> NodeType: 
         return NodeType.StringLiteral
     
@@ -214,14 +214,12 @@ class StringLiteral(Expression):
             "type": self.type().value,
             "value": self.value
         }
-    
 class IdentifierLiteral(Expression):
-    def __init__(self, value: str = None) -> None:
-        self.value: str = value
-
+    def __init__(self, value: str | None = None) -> None:
+        self.value: str | None = value
     def __str__(self):
         return f'IdentifierLiteral({self.value})'
-    
+
     def type(self) -> NodeType: 
         return NodeType.IdentifierLiteral
     

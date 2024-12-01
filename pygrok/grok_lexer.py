@@ -39,8 +39,8 @@ class Lexer:
     def __new_token(self, tt: TokenType, literal: Any) -> Token:
         return Token(type=tt, literal = literal, line_no = self.line_no, position= self.position)
     
-    def __is_digit(self, ch: str) -> bool:
-        return '0' <= ch and ch <= '9'
+    def __is_digit(self, ch: str | None) -> bool:
+        return ch is not None and '0' <= ch and ch <= '9'
 
     def __is_letter(self, ch: str) -> bool:
         return 'a' <= ch and ch <='z' or 'A'<= ch and ch <='Z' or ch == '_'
@@ -78,7 +78,7 @@ class Lexer:
         return self.source[position:self.position]
 
     def next_token(self) -> Token: 
-        tok: Token = None  
+        tok: Token = Token() 
 
         self.__skip_whitespace()
         match self.current_char:
@@ -89,7 +89,7 @@ class Lexer:
                     ch = self.current_char
                     self.__read_char()
                     tok = self.__new_token(TokenType.ARROW, ch + self.current_char)
-                else: 
+                else:
                     tok = self.__new_token(TokenType.MINUS, self.current_char)
             case '*': 
                 tok = self.__new_token(TokenType.ASTERISK, self.current_char)
@@ -128,6 +128,8 @@ class Lexer:
                     tok = self.__new_token(TokenType.ILLEGAL, self.current_char)
         self.__read_char()
         return tok
+
+
 
 
 

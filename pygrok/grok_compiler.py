@@ -20,10 +20,11 @@ class Compiler:
         self.env: Environment = Environment()
 
     def compile(self, node: Node) -> None: 
+        if node == None: 
+            return 
         match node.type(): 
             case NodeType.Program: 
                 self.__visit_program(node)
-
             # Statements 
             case  NodeType.ExpressionStatement:
                 self.__visit_expression_statement(node)
@@ -37,10 +38,6 @@ class Compiler:
                 self.__visit_block_statement(node)
             case NodeType.ReturnStatement: 
                 self.__visit_return_statement(node)
-            
-            # expressions
-            case NodeType.InfixExpression:
-                self.__visit_infix_expression(node)
 
     # region Visit Methods 
     def __visit_program(self, node: Program) -> None: 
@@ -53,10 +50,10 @@ class Compiler:
 
     def __visit_let_statement(self, node: LetStatement) -> None:
         name: str = node.name.value
-        value: Expression = node.value
+        value: Expression | None = node.value
         value_type: str = node.value_type
 
-        value, Type = self.__resolve_value(node=value)        
+        value, Type  = self.__resolve_value(node=value)        
 
         if self.env.lookup(name) is None:
             #define and allocate
@@ -76,15 +73,15 @@ class Compiler:
             self.compile(stmt)
 
     def __visit_return_statement(self, node: ReturnStatement) -> None:
-        value: Expression = node.return_value
+        value: Expression | None = node.return_value
         value, Type = self.__resolve_value(value)
 
         self.builder.ret(value)
 
     def __visit_function_statement(self, node: FunctionStatement) -> None:
         name: str = node.name.value
-        body: BlockStatement = node.body
-        params: list[IdentifierLiteral] = node.parameters
+        body : BlockStatement | None = node.body
+        params : list[IdentifierLiteral] = node.parameters
 
         # track param names
         param_names: list[str] = [p.value for p in params]
@@ -117,7 +114,7 @@ class Compiler:
     #endregion 
     
     #region Expressions 
-    def __visit_infix_expression(self, node: InfixExpression) -> None:
+    def __visit_infix_expression(self, node: InfixExpression) -> tuple[ir.Value | None, ir.Type | None] :
         operator: str = node.operator
         left_value, left_type = self.__resolve_value(node.left_node)
         right_value, right_type = self.__resolve_value(node.right_node)
@@ -169,16 +166,13 @@ class Compiler:
     #region Helper Methods
     def __resolve_value(self, node: Expression, value_type: str = None) -> tuple[ir.Value, ir.Type]:
         match node.type(): 
-            case NodeType.IntegerLiteral: 
-                node: IntegerLiteral = node 
+            case NodeType.IntegerLiteral:  
                 value, Type = node.value, self.type_map["int" if value_type is None else value_type]
                 return ir.Constant(Type , value), Type 
             case NodeType.FloatLiteral: 
-                node: FloatLiteral = node 
                 value, Type = node.value, self.type_map["float" if value_type is None else value_type]
                 return ir.Constant(Type , value), Type 
             case NodeType.IdentifierLiteral: 
-                node: IdentifierLiteral = node
                 ptr,Type = self.env.lookup(node.value)
                 return self.builder.load(ptr), Type
 

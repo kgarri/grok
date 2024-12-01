@@ -36,8 +36,8 @@ class Parser:
 
         self.errors: list[str] = []
 
-        self.current_token: Token = None # current tok
-        self.peek_token: Token = None # next tok
+        self.current_token: Token = Token() # current tok
+        self.peek_token: Token = Token() # next tok
 
         self.prefix_parse_fns: dict[TokenType, Callable] = {
             TokenType.IDENT: self.__parse_identifier,
@@ -81,17 +81,20 @@ class Parser:
 
     # check precedence (current)
     def __current_precedence(self) -> PrecedenceType:
-        prec: int | None = PRECEDENCES.get(self.peek_token.type)
+        if self.peek_token.type == None: 
+            return PrecedenceType.P_LOWEST
+        prec: PrecedenceType | None = PRECEDENCES.get(self.peek_token.type)
         if prec is None: 
             return PrecedenceType.P_LOWEST
-        return 
-    
+        return prec 
     # check precedence (next)
     def __peek_precedence(self) -> PrecedenceType:
-        prec: int | None = PRECEDENCES.get(self.peek_token.type)
+        if self.peek_token.type == None: 
+            return PrecedenceType.P_LOWEST
+        prec: PrecedenceType | None = PRECEDENCES.get(self.peek_token.type)
         if prec is None: 
             return PrecedenceType.P_LOWEST
-        return prec
+        return prec 
 
     # append error to errors list 
     def __peek_error(self, tt: TokenType) -> None: 
@@ -103,11 +106,11 @@ class Parser:
     
     # endregion 
 
-    def parse_program(self) -> None: 
+    def parse_program(self) -> Program: 
         program: Program = Program()
 
         while self.current_token.type != TokenType.EOF:
-            stmt: Statement = self.__parse_statement()
+            stmt: Statement | None = self.__parse_statement()
             if stmt is not None: 
                 program.statements.append(stmt)
 
@@ -117,8 +120,7 @@ class Parser:
         return program 
     
     # region Statement Methods
-    def __parse_statement(self) -> Statement:
-        #print(f'Parsing statement. Current token: {self.current_token}. Current token type: {self.current_token.type}')
+    def __parse_statement(self) -> Statement | None:
         match self.current_token.type:
             case TokenType.LET: 
                 return self.__parse_let_statement()
@@ -140,7 +142,7 @@ class Parser:
 
         return stmt
     
-    def __parse_let_statement(self) -> LetStatement: 
+    def __parse_let_statement(self) -> LetStatement | None: 
         #let a: int = 10; 
         stmt: LetStatement = LetStatement()
 
@@ -169,7 +171,7 @@ class Parser:
 
         return stmt
 
-    def __parse_function_statement(self) -> FunctionStatement:
+    def __parse_function_statement(self) -> FunctionStatement | None:
         stmt: FunctionStatement = FunctionStatement()
 
         # fn name() 8> int { return 10; }
@@ -207,7 +209,7 @@ class Parser:
 
         return stmt 
 
-    def __parse_return_statement(self) -> ReturnStatement:
+    def __parse_return_statement(self) -> ReturnStatement | None:
         stmt: ReturnStatement = ReturnStatement()
 
         self.__next_token()
@@ -225,7 +227,7 @@ class Parser:
         self.__next_token()
 
         while not self.__current_token_is(TokenType.RBRACE) and not self.__current_token_is(TokenType.EOF):
-            stmt: Statement = self.__parse_statement()
+            stmt: Statement | None  = self.__parse_statement()
             if stmt is not None: 
                 block_stmt.statements.append(stmt)
 
@@ -235,8 +237,9 @@ class Parser:
     # endregion
 
     # region Expression Methods
-    def __parse_expression(self, precedence: PrecedenceType) -> Expression:
-        
+    def __parse_expression(self, precedence: PrecedenceType) -> Expression | None:
+        if self.current_token.type == None:
+            return None
         prefix_fn: Callable | None = self.prefix_parse_fns.get(self.current_token.type)
         print(f'PREFIX_FN FOUND: {prefix_fn} in {self.current_token.type}')
         if prefix_fn is None: 
@@ -246,6 +249,8 @@ class Parser:
         left_expr: Expression = prefix_fn()
         print(f'LEFT_EXPR FOUND: {left_expr}')
         while not self.__peek_token_is(TokenType.SEMICOLON) and precedence.value < self.__peek_precedence().value:
+            if self.peek_token.type == None:
+                return left_expr
             infix_fn: Callable | None = self.infix_parse_fns.get(self.peek_token.type)
             if infix_fn is None:
                 return left_expr
@@ -267,10 +272,10 @@ class Parser:
         infix_expr.right_node = self.__parse_expression(precedence)
         return infix_expr
     
-    def __parse_grouped_expression(self) -> Expression:
+    def __parse_grouped_expression(self) -> Expression | None:
         self.__next_token()
 
-        expr: Expression = self.__parse_expression(PrecedenceType.P_LOWEST)
+        expr: Expression | None = self.__parse_expression(PrecedenceType.P_LOWEST)
 
         if not self.__expect_peek(TokenType.RPAREN):
             return None
@@ -280,22 +285,22 @@ class Parser:
     # endregion
 
     # region Prefix Methods
-    def __parse_identifier(self) -> IdentifierLiteral: 
+    def __parse_identifier(self) -> IdentifierLiteral | None: 
         return IdentifierLiteral(value=self.current_token.literal)
 
-    def __parse_string_literal(self) -> Expression:
+    def __parse_string_literal(self) -> Expression | None:
         """Parses StringLiteral from current token"""
         str_lit: StringLiteral = StringLiteral()
 
         try: 
-            str_lit.value = int(self.current_token.literal)
+            str_lit.value = self.current_token.literal
         except:
             self.errors.append("Could not parse `(self.current_token.literal)` as a string.")
             return None
         
         return str_lit
 
-    def __parse_int_literal(self) -> Expression:
+    def __parse_int_literal(self) -> Expression | None:
         """Parses IntegerLiteral from current token"""
         int_lit: IntegerLiteral = IntegerLiteral()
 
@@ -307,7 +312,7 @@ class Parser:
         
         return int_lit
     
-    def __parse_float_literal(self) -> Expression:
+    def __parse_float_literal(self) -> Expression | None:
         """Parses FloatLiteral from current token"""
         float_lit: FloatLiteral = FloatLiteral()
 
