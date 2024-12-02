@@ -6,8 +6,8 @@ from enum import Enum, auto
 from grok_ast import Statement, Expression, Program
 from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement, IfStatement
 from grok_ast import InfixExpression, CallExpression
-from grok_ast import FunctionParameter 
 from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral, BooleanLiteral
+from grok_ast import FunctionParameter 
 
 # precedence types 
 class PrecedenceType(Enum):
@@ -19,7 +19,9 @@ class PrecedenceType(Enum):
     P_EXPONENT = auto()
     P_PREFIX = auto()
     P_CALL = auto()
-    P_INDEX = auto()
+    P_INDEX = auto() 
+
+
 
 # precedence mapping
 PRECEDENCES: dict[TokenType, PrecedenceType] = {
@@ -28,6 +30,7 @@ PRECEDENCES: dict[TokenType, PrecedenceType] = {
     TokenType.SLASH: PrecedenceType.P_PRODUCT, 
     TokenType.ASTERISK: PrecedenceType.P_PRODUCT, 
     TokenType.MODULUS: PrecedenceType.P_PRODUCT, 
+    TokenType.LPAREN: PrecedenceType.P_CALL,
     TokenType.POW: PrecedenceType.P_EXPONENT, 
     TokenType.EQ_EQ: PrecedenceType.P_EQUALS, 
     TokenType.NOT_EQ: PrecedenceType.P_EQUALS, 
@@ -64,6 +67,7 @@ class Parser:
             TokenType.ASTERISK: self.__parse_infix_expression,
             TokenType.POW: self.__parse_infix_expression,
             TokenType.MODULUS: self.__parse_infix_expression,
+            TokenType.LPAREN: self.__parse_call_expression,
             TokenType.EQ_EQ: self.__parse_infix_expression, 
             TokenType.NOT_EQ: self.__parse_infix_expression, 
             TokenType.LT: self.__parse_infix_expression, 

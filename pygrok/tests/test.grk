@@ -1,11 +1,40 @@
-fn test(a: int, b: int) -> int {
-    return a + b thx
+
+fn testFunction() -> int {
+    return 5; 
 }
 
-fn mult(a: float, b: float) -> float {
+fn add(a: int, b: int) -> int {
     return a + b;
+
+}
+
+
+fn mul(a: int, b: int) -> int {
+    return a * b;
+}
+
+fn fib(n: int) -> int {
+    if n <= 1 {
+        return 1;
+    }
+
+    return fib(n-1) + fib(n-2);
 }
 
 fn main() -> int {
-    return test(3, 4);
+
+    pls testStr: string  = "Hello ";
+    let testStr2: string = "World!";
+    printf(concat(testStr,testStr2));
+
+    pls a: int be testFunction() thx
+    let b: int = 9;
+
+    if  a >= 5 {
+        a = 15;
+    } else {
+        a = 1;
+    }
+
+    return fib(a);
 }

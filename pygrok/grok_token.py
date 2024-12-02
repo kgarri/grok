@@ -41,6 +41,7 @@ class TokenType(Enum):
     RPAREN = "RPAREN"
     LBRACE = "LBRACE"
     RBRACE = "RBRACE"
+    QUOTE = "QUOTE"
 
     # Keywords
     LET = "LET"
@@ -92,14 +93,14 @@ ALT_KEYWORDS: dict[str, TokenType] = {
     "absurd": TokenType.FALSE
 }
 
-TYPE_KEYWORDS: list[str] = ["int", "float"]
+TYPE_KEYWORDS: list[str] = ["int", "float", "string"]
 
 def lookup_ident(ident: str) -> TokenType:
-    tt: TokenType |None = KEYWORDS.get(ident)
+    tt: TokenType | None = KEYWORDS.get(ident)
     if tt is not None: 
         return tt
 
-    tt: TokenType|None = ALT_KEYWORDS.get(ident)
+    tt: TokenType| None = ALT_KEYWORDS.get(ident)
     if tt is not None: 
         return tt
 

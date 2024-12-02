@@ -2,17 +2,19 @@ from llvmlite import ir
 
 from grok_ast import Node, NodeType, Program, Expression
 from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement, IfStatement
-from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral, BooleanLiteral
-from grok_ast import InfixExpression, CallExpression 
+from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral, StringLiteral, BooleanLiteral
+from grok_ast import InfixExpression, CallExpression
 from grok_ast import FunctionParameter
 from grok_environment import Environment
+
 
 class Compiler:
     def __init__(self) -> None: 
         self.type_map: dict[str, ir.Type] = {
             'int' : ir.IntType(32),
             'float' : ir.FloatType(), 
-            'bool' : ir.IntType(1)
+            'bool' : ir.IntType(1),
+            'str' : ir.IntType(8).as_pointer()
         }
 
         self.module: ir.Module = ir.Module('main')
@@ -68,6 +70,8 @@ class Compiler:
                 self.__visit_if_statement(node)
             case NodeType.CallExpression: 
                 self.__visit_call_expression(node)
+            case NodeType.IfStatement: 
+                self.__visit_if_statement(node)
             
     # region Visit Methods 
     def __visit_program(self, node: Program) -> None: 
@@ -83,7 +87,6 @@ class Compiler:
         value: Expression | None = node.value
         value_type: str = node.value_type
         value, Type  = self.__resolve_value(node=value)        
-
 
         if self.env.lookup(name) is None:
             #define and allocate
@@ -157,6 +160,7 @@ class Compiler:
         self.env.define(name, func, return_type)
 
         self.builder = previous_builder
+
     def __visit_assign_statement(self, node: AssignStatement) -> None: 
         name: str | None = node.ident.value
         value: Expression = node.right_value
@@ -273,6 +277,14 @@ class Compiler:
 
 
         return value, Type 
+
+    def global_constant(self, name, value, linkage='internal'):
+        global_var = ir.GlobalVariable(self.module, value.type , name)
+        global_var.linkage = linkage
+        global_var.global_constant = True
+        global_var.initializer = value
+        return global_var
+
     
     def __visit_call_expression(self, node: CallExpression) -> tuple[ir.Instruction, ir.Type]: 
         name: str = node.function.value
@@ -289,9 +301,41 @@ class Compiler:
 
         match name: 
             case 'printf':
-                #TODO: implement printf
-                pass
-            # all other possible function names here
+                format = "%s\n"  
+                byt_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(bytearray((format).encode('ascii')))), bytearray(format.encode("ascii")))
+                global_fmt = self.global_constant("fstr", byt_fmt)
+                voidptr_ty = ir.IntType(8).as_pointer()
+                ret_type = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg = True )
+                try: 
+                    fn = self.module.get_global("printf")
+                except KeyError:
+                    fn = ir.Function( self.module, ret_type , name ="printf")
+                ptr_fmt = self.builder.bitcast(global_fmt, voidptr_ty)
+                ret = self.builder.call(fn, [ptr_fmt] + args)
+            case 'memcpy': 
+                voidptr_ty = ir.IntType(8).as_pointer()
+                ret_type = ir.FunctionType(ir.VoidType(), [voidptr_ty, voidptr_ty, ir.IntType(32)])
+                try:
+                    fn = self.module.get_global("memcpy")
+                except KeyError: 
+                    fn = ir.Function(self.module, ret_type, name="memcpy")
+                ret = self.builder.call(fn, args)
+            case 'malloc':
+                voidptr_ty = ir.IntType(8).as_pointer()
+                ret_type = ir.FunctionType(voidptr_ty, [ir.IntType(32)])
+                try:
+                    fn = self.module.get_global("malloc")
+                except KeyError:
+                    fn = ir.Function(self.module, ret_type, name="malloc")
+                ret = self.builder.call(fn, args)
+            case 'concat':
+                i32 = ir.IntType(32)
+                ret_type = ir.FunctionType(self.type_map['str'], [self.type_map['str']], var_arg = True)
+                try:
+                    fn = self.module.get_global("concat")
+                except KeyError:
+                    fn = ir.Function(self.module, ret_type, name = "concat")
+                ret = self.builder.call(fn, args)
             case _:
                 func, ret_type = self.env.lookup(name)
                 ret = self.builder.call(func, args)
@@ -311,6 +355,20 @@ class Compiler:
             case NodeType.FloatLiteral: 
                 value, Type = node.value, self.type_map["float" if value_type is None else value_type]
                 return ir.Constant(Type , value), Type 
+            case NodeType.StringLiteral:
+                # string handling -> create string with irBuilder and return type and value
+                value = node.value
+
+                string_value = ir.Constant(ir.ArrayType(ir.IntType(8), len(value) + 1), bytearray((value + "\0"), "ascii"))
+            
+                string_global = ir.GlobalVariable(self.module, string_value.type, name=(node.value + "_string"))
+                string_global.linkage = 'internal'
+                string_global.global_constant = True
+                string_global.initializer = string_value
+
+                string_ptr = self.builder.bitcast(string_global, self.type_map['str'])
+
+                return string_ptr, self.type_map['str']
             case NodeType.IdentifierLiteral: 
                 ptr,Type = self.env.lookup(node.value)
                 return self.builder.load(ptr), Type
