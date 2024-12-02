@@ -234,6 +234,15 @@ class Compiler:
                 case '!=': 
                     value  = self.builder.icmp_signed('!=', left_value, right_value)
                     Type = ir.IntType(1)
+                case '&&': 
+                    value = self.builder.and_(left_value, right_value) 
+                    Type = ir.IntType(1)
+                case '||':
+                    value = self.builder.or_(left_value, right_value)
+                    Type = ir.IntType(1)
+
+
+
 
         elif isinstance(right_type, ir.FloatType) and isinstance(left_type, ir.FloatType):
             Type = self.type_map['float']
@@ -270,7 +279,12 @@ class Compiler:
                 case '!=': 
                     value  = self.builder.fcmp_ordered('!=', left_value, right_value)
                     Type = ir.IntType(1)
-
+                case '&&': 
+                    value = self.builder.and_(left_value, right_value) 
+                    Type = ir.IntType(1)
+                case '||':
+                    value = self.builder.or_(left_value, right_value)
+                    Type = ir.IntType(1)
 
         return value, Type 
     

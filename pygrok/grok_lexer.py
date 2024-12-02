@@ -132,6 +132,22 @@ class Lexer:
                 else: 
                     tok = self.__new_token(TokenType.EQ , self.current_char)
 
+            case '&': 
+                #handle && 
+                if self.__peek_char() == '&': 
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.AND, ch+ self.current_char)
+                else:
+                    tok = self.__new_token(TokenType.ILLEGAL, self.current_char)
+            case '|': 
+                #handle ||
+                if self.__peek_char() == '|': 
+                    ch = self.current_char
+                    self.__read_char()
+                    tok = self.__new_token(TokenType.OR, ch+ self.current_char)
+                else:
+                    tok = self.__new_token(TokenType.ILLEGAL, self.current_char)
             case ':':
                 tok = self.__new_token(TokenType.COLON, self.current_char)
             case ',':

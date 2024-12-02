@@ -32,6 +32,10 @@ class TokenType(Enum):
     LT_EQ = '<='
     GT_EQ = '>='
 
+    #Logical Operators 
+    AND = '&&'
+    OR = '||'
+
     #Symbols 
     COLON = "COLON"
     COMMA = "COMMA"
@@ -75,7 +79,9 @@ KEYWORDS: dict[str, TokenType] = {
     "else": TokenType.ELSE, 
     "elif": TokenType.ELIF,  
     "true": TokenType.TRUE, 
-    "false": TokenType.FALSE
+    "false": TokenType.FALSE,
+    "and": TokenType.AND, 
+    "or": TokenType.OR
 }
 
 ALT_KEYWORDS: dict[str, TokenType] = {

@@ -1,11 +1,12 @@
-fn test(a: int, b: int) -> int {
-    return a + b thx
-}
-
-fn mult(a: float, b: float) -> float {
-    return a + b;
-}
-
 fn main() -> int {
-    return test(3, 4);
+    let a: int = 3; 
+    pls b: int be 4 thx
+
+    if a == 3 || false {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+    return 0;
 }

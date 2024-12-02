@@ -12,6 +12,7 @@ from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLite
 # precedence types 
 class PrecedenceType(Enum):
     P_LOWEST = 0
+    P_LOGICAL = auto()
     P_EQUALS = auto()
     P_LESSGREATER = auto() 
     P_SUM = auto()
@@ -35,7 +36,9 @@ PRECEDENCES: dict[TokenType, PrecedenceType] = {
     TokenType.LT_EQ: PrecedenceType.P_LESSGREATER, 
     TokenType.GT: PrecedenceType.P_LESSGREATER, 
     TokenType.GT_EQ: PrecedenceType.P_LESSGREATER,
-    TokenType.NOT: PrecedenceType.P_PREFIX
+    TokenType.NOT: PrecedenceType.P_PREFIX, 
+    TokenType.AND: PrecedenceType.P_LOGICAL, 
+    TokenType.OR: PrecedenceType.P_LOGICAL
 }
 
 class Parser: 
@@ -69,7 +72,9 @@ class Parser:
             TokenType.LT: self.__parse_infix_expression, 
             TokenType.LT_EQ: self.__parse_infix_expression, 
             TokenType.GT: self.__parse_infix_expression, 
-            TokenType.GT_EQ: self.__parse_infix_expression
+            TokenType.GT_EQ: self.__parse_infix_expression,
+            TokenType.AND: self.__parse_infix_expression, 
+            TokenType.OR: self.__parse_infix_expression
         } # ie. operators
 
         self.__next_token()
@@ -420,6 +425,7 @@ class Parser:
             str_lit.value = self.current_token.literal
         except:
             self.errors.append("Could not parse `(self.current_token.literal)` as a string.")
+
             return None
         
         return str_lit
