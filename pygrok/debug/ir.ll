@@ -2,16 +2,18 @@
 target triple = "x86_64-w64-windows-gnu"
 target datalayout = ""
 
-define i32 @"test"()
+define i32 @"testFunction"()
 {
-test_entry:
-  %".2" = srem i32 69, 60
-  ret i32 %".2"
+testFunction_entry:
+  ret i32 1
 }
 
 define i32 @"main"()
 {
 main_entry:
-  %".2" = call i32 @"test"()
-  ret i32 %".2"
+  %".2" = bitcast [13 x i8] @"str_const" to i8*
+  %".3" = alloca i8*
+  store i8* %".2", i8** %".3"
+  %".5" = call i32 @"testFunction"()
+  ret i32 1
 }

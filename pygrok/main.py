@@ -7,7 +7,7 @@ from grok_ast import Program
 
 from llvmlite import ir 
 import llvmlite.binding as llvm  
-from ctypes import CFUNCTYPE, c_int, c_float 
+from ctypes import CFUNCTYPE, c_int, c_float
 
 LEXER_DEBUG: bool = False
 PARSER_DEBUG: bool = True

@@ -10,7 +10,8 @@ class Compiler:
     def __init__(self) -> None: 
         self.type_map: dict[str, ir.Type] = {
             'int' : ir.IntType(32),
-            'float' : ir.FloatType()
+            'float' : ir.FloatType(),
+            'str' : ir.IntType(8).as_pointer(),  # Pointer to an i8 (C-style string)
         }
 
         self.module: ir.Module = ir.Module('main')
@@ -61,7 +62,6 @@ class Compiler:
         value: Expression | None = node.value
         value_type: str = node.value_type
         value, Type  = self.__resolve_value(node=value)        
-
 
         if self.env.lookup(name) is None:
             #define and allocate
@@ -120,6 +120,7 @@ class Compiler:
         self.env.define(name, func, return_type)
 
         self.builder = previous_builder
+
     def __visit_assign_statement(self, node: AssignStatement) -> None: 
         name: str | None = node.ident.value
         value: Expression = node.right_value
@@ -193,6 +194,9 @@ class Compiler:
             case 'printf':
                 #TODO: implement printf
                 pass
+            case 'concat':
+                #TODO: implement concat
+                pass
             # all other possible function names here
             case _:
                 func, ret_type = self.env.lookup(name)
@@ -213,6 +217,17 @@ class Compiler:
             case NodeType.FloatLiteral: 
                 value, Type = node.value, self.type_map["float" if value_type is None else value_type]
                 return ir.Constant(Type , value), Type 
+            case NodeType.StringLiteral:
+                # string handling -> create string with irBuilder and return type and value
+                value = node.value
+
+                string_value = ir.Constant(ir.ArrayType(ir.IntType(8), len(value) + 1), bytearray((value + "\0"), "ascii"))
+            
+                string_global = ir.GlobalVariable(self.module, string_value.type, name=(node.value + "_string"))
+                string_global.linkage = 'private'
+                string_global.initializer = string_value
+
+                return string_value, self.type_map["str"]
             case NodeType.IdentifierLiteral: 
                 ptr,Type = self.env.lookup(node.value)
                 return self.builder.load(ptr), Type

@@ -68,11 +68,19 @@ class Lexer:
         else: 
             return self.__new_token(TokenType.FLOAT, float(output))
 
-
-
     def __read_identifier(self) -> str: 
         position = self.position 
         while self.current_char is not None and (self.__is_letter(self.current_char) or self.current_char.isalnum()): 
+            self.__read_char()
+
+        return self.source[position:self.position]
+    
+    def __read_string(self) -> str:
+        self.__read_char() # skip first quote 
+
+        position = self.position 
+
+        while self.current_char is not None and (self.current_char is not "\""): 
             self.__read_char()
 
         return self.source[position:self.position]
@@ -113,6 +121,12 @@ class Lexer:
                 tok = self.__new_token(TokenType.RBRACE, self.current_char)
             case ";":
                 tok = self.__new_token(TokenType.SEMICOLON, self.current_char)
+            case "\"": # indicates a string follows 
+                # tempStr is the string read from the Grok code
+                tempStr = self.__read_string()
+
+                # actually create token of type string with the string value
+                tok = self.__new_token(TokenType.STRING, tempStr)
             case None: 
                 tok = self.__new_token(TokenType.EOF, "")
             case _:

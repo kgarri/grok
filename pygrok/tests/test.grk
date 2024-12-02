@@ -1,7 +1,9 @@
-fn test() -> int {
-    return 69 % 60 thx
+fn testFunction() -> int {
+    return 1; 
 }
 
 fn main() -> int {
-    return test();
+    let testStr: string = "Hello world!";
+    testFunction();
+    return 1;
 }
