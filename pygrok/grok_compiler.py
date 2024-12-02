@@ -299,7 +299,7 @@ class Compiler:
 
         match name: 
             case 'printf':
-                format = "%s\n\0"  
+                format = "%s\n"  
                 byt_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(bytearray((format).encode('ascii')))), bytearray(format.encode("ascii")))
                 global_fmt = self.global_constant("fstr", byt_fmt)
                 voidptr_ty = ir.IntType(8).as_pointer()

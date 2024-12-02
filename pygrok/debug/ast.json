@@ -136,10 +136,10 @@
                                         "type": "IdentifierLiteral",
                                         "value": "n"
                                     },
-                                    "operator": "<",
+                                    "operator": "<=",
                                     "right_node": {
                                         "type": "IntegerLiteral",
-                                        "value": 2
+                                        "value": 1
                                     }
                                 },
                                 "consequence": {
@@ -330,7 +330,7 @@
                                             },
                                             "right_value": {
                                                 "type": "IntegerLiteral",
-                                                "value": 10
+                                                "value": 15
                                             }
                                         }
                                     ]

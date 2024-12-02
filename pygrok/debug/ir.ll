@@ -42,7 +42,7 @@ fib_entry:
   %".3" = alloca i32
   store i32 %".1", i32* %".3"
   %".5" = load i32, i32* %".3"
-  %".6" = icmp slt i32 %".5", 2
+  %".6" = icmp sle i32 %".5", 1
   br i1 %".6", label %"fib_entry.if", label %"fib_entry.endif"
 fib_entry.if:
   ret i32 1
@@ -69,7 +69,7 @@ main_entry:
   %".8" = load i8*, i8** %".3"
   %".9" = load i8*, i8** %".6"
   %".10" = call i8* (i8*, ...) @"concat"(i8* %".8", i8* %".9")
-  %".11" = bitcast [4 x i8]* @"fstr" to i8*
+  %".11" = bitcast [3 x i8]* @"fstr" to i8*
   %".12" = call i32 (i8*, ...) @"printf"(i8* %".11", i8* %".10")
   %".13" = call i32 @"testFunction"()
   %".14" = alloca i32
@@ -80,7 +80,7 @@ main_entry:
   %".19" = icmp sge i32 %".18", 5
   br i1 %".19", label %"main_entry.if", label %"main_entry.else"
 main_entry.if:
-  store i32 10, i32* %".14"
+  store i32 15, i32* %".14"
   br label %"main_entry.endif"
 main_entry.else:
   store i32 1, i32* %".14"
@@ -95,5 +95,5 @@ main_entry.endif:
 @"World!_string" = internal constant [7 x i8] c"World!\00"
 declare i8* @"concat"(i8* %".1", ...)
 
-@"fstr" = internal constant [4 x i8] c"%s\0a\00"
+@"fstr" = internal constant [3 x i8] c"%s\0a"
 declare i32 @"printf"(i8* %".1", ...)

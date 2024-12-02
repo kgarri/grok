@@ -14,21 +14,24 @@ fn mul(a: int, b: int) -> int {
 }
 
 fn fib(n: int) -> int {
-    if n<2 {
+    if n <= 1 {
         return 1;
     }
+
     return fib(n-1) + fib(n-2);
 }
 
 fn main() -> int {
+
     pls testStr: string  = "Hello ";
     let testStr2: string = "World!";
     printf(concat(testStr,testStr2));
+
     pls a: int be testFunction() thx
     let b: int = 9;
 
     if  a >= 5 {
-        a = 10;
+        a = 15;
     } else {
         a = 1;
     }
