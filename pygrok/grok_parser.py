@@ -4,9 +4,9 @@ from typing import Callable
 from enum import Enum, auto
 
 from grok_ast import Statement, Expression, Program
-from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement
+from grok_ast import ExpressionStatement, LetStatement, FunctionStatement, ReturnStatement, BlockStatement, AssignStatement, IfStatement
 from grok_ast import InfixExpression, CallExpression
-from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral
+from grok_ast import IntegerLiteral, FloatLiteral, StringLiteral, IdentifierLiteral, BooleanLiteral
 from grok_ast import FunctionParameter 
 
 # precedence types 
@@ -19,7 +19,9 @@ class PrecedenceType(Enum):
     P_EXPONENT = auto()
     P_PREFIX = auto()
     P_CALL = auto()
-    P_INDEX = auto()
+    P_INDEX = auto() 
+
+
 
 # precedence mapping
 PRECEDENCES: dict[TokenType, PrecedenceType] = {

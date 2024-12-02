@@ -1,10 +1,37 @@
+
 fn testFunction() -> int {
-    return 1; 
+    return 5; 
+}
+
+fn add(a: int, b: int) -> int {
+    return a + b;
+
+}
+
+
+fn mul(a: int, b: int) -> int {
+    return a * b;
+}
+
+fn fib(n: int) -> int {
+    if n<2 {
+        return 1;
+    }
+    return fib(n-1) + fib(n-2);
 }
 
 fn main() -> int {
-    let testStr: string = "Hello world!";
-    printf(testStr);
-    testFunction();
-    return 1;
+    pls testStr: string  = "Hello ";
+    let testStr2: string = "World!";
+    printf(concat(testStr,testStr2));
+    pls a: int be testFunction() thx
+    let b: int = 9;
+
+    if  a >= 5 {
+        a = 10;
+    } else {
+        a = 1;
+    }
+
+    return fib(a);
 }

@@ -1,5 +1,6 @@
 import json
 import time
+import os
 from grok_lexer import Lexer 
 from grok_compiler import Compiler
 from grok_parser import Parser 
@@ -57,9 +58,12 @@ if __name__ == "__main__":
 
     if RUN_CODE: 
         print("===== RUN CODE =====")
+        current_dir = os.getcwd()
+        concat_path = os.path.join(current_dir, "concat.so")
         llvm.initialize()
         llvm.initialize_native_target()
         llvm.initialize_native_asmprinter()
+        llvm.load_library_permanently(concat_path)
 
         try: 
             llvm_ir_parsed = llvm.parse_assembly(str(module)) # str(module) is the IR as a string

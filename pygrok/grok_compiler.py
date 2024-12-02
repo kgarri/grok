@@ -1,8 +1,8 @@
 from llvmlite import ir 
 
 from grok_ast import Node, NodeType, Program, Expression
-from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement
-from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral
+from grok_ast import ExpressionStatement, LetStatement, BlockStatement, ReturnStatement, FunctionStatement, AssignStatement, IfStatement
+from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral, StringLiteral, BooleanLiteral
 from grok_ast import InfixExpression, CallExpression
 from grok_ast import FunctionParameter
 from grok_environment import Environment
@@ -13,7 +13,8 @@ class Compiler:
         self.type_map: dict[str, ir.Type] = {
             'int' : ir.IntType(32),
             'float' : ir.FloatType(), 
-            'bool' : ir.IntType(1)
+            'bool' : ir.IntType(1),
+            'str' : ir.IntType(8).as_pointer()
         }
 
         self.module: ir.Module = ir.Module('main')
@@ -302,17 +303,37 @@ class Compiler:
                 byt_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(bytearray((format).encode('ascii')))), bytearray(format.encode("ascii")))
                 global_fmt = self.global_constant("fstr", byt_fmt)
                 voidptr_ty = ir.IntType(8).as_pointer()
-                ret_type = ir.FunctionType(ir.IntType(32),[voidptr_ty], var_arg = True )
+                ret_type = ir.FunctionType(ir.IntType(32), [voidptr_ty], var_arg = True )
                 try: 
                     fn = self.module.get_global("printf")
                 except KeyError:
                     fn = ir.Function( self.module, ret_type , name ="printf")
                 ptr_fmt = self.builder.bitcast(global_fmt, voidptr_ty)
                 ret = self.builder.call(fn, [ptr_fmt] + args)
+            case 'memcpy': 
+                voidptr_ty = ir.IntType(8).as_pointer()
+                ret_type = ir.FunctionType(ir.VoidType(), [voidptr_ty, voidptr_ty, ir.IntType(32)])
+                try:
+                    fn = self.module.get_global("memcpy")
+                except KeyError: 
+                    fn = ir.Function(self.module, ret_type, name="memcpy")
+                ret = self.builder.call(fn, args)
+            case 'malloc':
+                voidptr_ty = ir.IntType(8).as_pointer()
+                ret_type = ir.FunctionType(voidptr_ty, [ir.IntType(32)])
+                try:
+                    fn = self.module.get_global("malloc")
+                except KeyError:
+                    fn = ir.Function(self.module, ret_type, name="malloc")
+                ret = self.builder.call(fn, args)
             case 'concat':
-                #TODO: implement concat
-                pass
-            # all other possible function names here
+                i32 = ir.IntType(32)
+                ret_type = ir.FunctionType(self.type_map['str'], [self.type_map['str']], var_arg = True)
+                try:
+                    fn = self.module.get_global("concat")
+                except KeyError:
+                    fn = ir.Function(self.module, ret_type, name = "concat")
+                ret = self.builder.call(fn, args)
             case _:
                 func, ret_type = self.env.lookup(name)
                 ret = self.builder.call(func, args)
@@ -339,10 +360,13 @@ class Compiler:
                 string_value = ir.Constant(ir.ArrayType(ir.IntType(8), len(value) + 1), bytearray((value + "\0"), "ascii"))
             
                 string_global = ir.GlobalVariable(self.module, string_value.type, name=(node.value + "_string"))
-                string_global.linkage = 'private'
+                string_global.linkage = 'internal'
+                string_global.global_constant = True
                 string_global.initializer = string_value
 
-                return string_value, ir.ArrayType(ir.IntType(8), len(value) + 1)
+                string_ptr = self.builder.bitcast(string_global, self.type_map['str'])
+
+                return string_ptr, self.type_map['str']
             case NodeType.IdentifierLiteral: 
                 ptr,Type = self.env.lookup(node.value)
                 return self.builder.load(ptr), Type
