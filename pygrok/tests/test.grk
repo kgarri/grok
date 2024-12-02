@@ -1,7 +1,6 @@
 fn testFunction() -> int {
     return 1; 
 }
-
 fn main() -> int {
     let testStr: string = "Hello world!";
     printf(testStr);
