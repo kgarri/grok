@@ -50,6 +50,21 @@
                         },
                         {
                             "type": "ExpressionStatement",
+                            "expr": "None"
+                        },
+                        {
+                            "type": "ExpressionStatement",
+                            "expr": {
+                                "type": "IdentifierLiteral",
+                                "value": "testStr"
+                            }
+                        },
+                        {
+                            "type": "ExpressionStatement",
+                            "expr": "None"
+                        },
+                        {
+                            "type": "ExpressionStatement",
                             "expr": {
                                 "type": "CallExpression",
                                 "function": {

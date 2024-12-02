@@ -6,12 +6,12 @@ from grok_ast import IntegerLiteral, FloatLiteral , IdentifierLiteral
 from grok_ast import InfixExpression, CallExpression
 from grok_environment import Environment
 
+
 class Compiler:
     def __init__(self) -> None: 
         self.type_map: dict[str, ir.Type] = {
             'int' : ir.IntType(32),
-            'float' : ir.FloatType(),
-            'str' : ir.IntType(8).as_pointer(),  # Pointer to an i8 (C-style string)
+            'float' : ir.FloatType()
         }
 
         self.module: ir.Module = ir.Module('main')
@@ -182,7 +182,14 @@ class Compiler:
                     pass
 
         return value, Type 
-    
+
+    def global_constant(self, name, value, linkage='internal'):
+        global_var = ir.GlobalVariable(self.module, value.type , name)
+        global_var.linkage = linkage
+        global_var.global_constant = True
+        global_var.initializer = value
+        return global_var
+
     def __visit_call_expression(self, node: CallExpression) -> None: 
         name: str = node.function.value
         params: list[Expression] = node.arguments
@@ -190,10 +197,25 @@ class Compiler:
         args = []
         types = []
 
+        if len(params) > 0:
+            for x in params: 
+                p_val, p_type = self.__resolve_value(x)
+                args.append(p_val)
+                types.append(p_type)
+
         match name: 
             case 'printf':
-                #TODO: implement printf
-                pass
+                format = "%s\n\0"  
+                byt_fmt = ir.Constant(ir.ArrayType(ir.IntType(8), len(bytearray((format).encode('ascii')))), bytearray(format.encode("ascii")))
+                global_fmt = self.global_constant("fstr", byt_fmt)
+                voidptr_ty = ir.IntType(8).as_pointer()
+                ret_type = ir.FunctionType(ir.IntType(32),[voidptr_ty], var_arg = True )
+                try: 
+                    fn = self.module.get_global("printf")
+                except KeyError:
+                    fn = ir.Function( self.module, ret_type , name ="printf")
+                ptr_fmt = self.builder.bitcast(global_fmt, voidptr_ty)
+                ret = self.builder.call(fn, [ptr_fmt] + args)
             case 'concat':
                 #TODO: implement concat
                 pass
@@ -227,7 +249,7 @@ class Compiler:
                 string_global.linkage = 'private'
                 string_global.initializer = string_value
 
-                return string_value, self.type_map["str"]
+                return string_value, ir.ArrayType(ir.IntType(8), len(value) + 1)
             case NodeType.IdentifierLiteral: 
                 ptr,Type = self.env.lookup(node.value)
                 return self.builder.load(ptr), Type
