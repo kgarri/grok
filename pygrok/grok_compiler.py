@@ -66,6 +66,8 @@ class Compiler:
                 self.__visit_return_statement(node)
             case NodeType.AssignStatement: 
                 self.__visit_assign_statement(node)
+            case NodeType.IfStatement: 
+                self.__visit_if_statement(node)
             case NodeType.CallExpression: 
                 self.__visit_call_expression(node)
             case NodeType.IfStatement: 
